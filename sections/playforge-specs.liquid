@@ -1,0 +1,97 @@
+{% comment %}
+  PlayForge Asset Compatibility / Technical Specs Section
+  Highlights engine support matrix, UV standards, and format specifications.
+{% endcomment %}
+
+<div class="pf-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+  <div class="pf-container">
+    <div class="pf-specs-table-wrap">
+      <div class="pf-specs-header">
+        <div>
+          <h3>{{ section.settings.heading | default: 'Compatibility & Pipeline Matrix' }}</h3>
+          <p class="pf-section-subtitle" style="font-size: 1.3rem; margin-top: 4px;">{{ section.settings.subheading | default: 'Standardized specifications verified across industry standard game engines and digital content creation tools.' }}</p>
+        </div>
+        <span class="pf-spec-pill is-format">v2.4 STANDARD</span>
+      </div>
+
+      <div class="pf-specs-grid">
+        <div class="pf-spec-cell">
+          <span class="pf-spec-label">Primary Game Engines</span>
+          <span class="pf-spec-value">Unreal Engine 5.0+, Unity 2022+ (URP/HDRP), Godot 4.0+</span>
+        </div>
+
+        <div class="pf-spec-cell">
+          <span class="pf-spec-label">3D DCC Packages</span>
+          <span class="pf-spec-value">Blender 3.6+, Maya, 3ds Max, Cinema 4D, Houdini</span>
+        </div>
+
+        <div class="pf-spec-cell">
+          <span class="pf-spec-label">Texture Workflow</span>
+          <span class="pf-spec-value">Metallic / Roughness PBR, 8-bit & 16-bit Normal Maps</span>
+        </div>
+
+        <div class="pf-spec-cell">
+          <span class="pf-spec-label">UV Coordinates</span>
+          <span class="pf-spec-value">Non-Overlapping Lightmap Channel (Channel 2), Zero Stretched UVs</span>
+        </div>
+
+        <div class="pf-spec-cell">
+          <span class="pf-spec-label">Real-Time Web 3D</span>
+          <span class="pf-spec-value">GLB/glTF 2.0 with Draco / Meshopt Compression Support</span>
+        </div>
+
+        <div class="pf-spec-cell">
+          <span class="pf-spec-label">Collision & Scale</span>
+          <span class="pf-spec-value">Metric Units (1 Unit = 1m / 1cm), Simplified Convex Colliders Included</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Pipeline Compatibility",
+  "tag": "section",
+  "class": "pf-specs-matrix-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Compatibility & Pipeline Matrix"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Standardized specifications verified across industry standard game engines and digital content creation tools."
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Pipeline Compatibility"
+    }
+  ]
+}
+{% endschema %}

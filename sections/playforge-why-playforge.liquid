@@ -1,0 +1,144 @@
+{% comment %}
+  PlayForge Why PlayForge Section
+  Explains the 5 core game-ready pipeline pillars that distinguish PlayForge from generic asset stores.
+{% endcomment %}
+
+<div
+  class="pf-section"
+  style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px; border-top: 1px solid var(--pf-border-subtle);"
+>
+  <div class="pf-container">
+    <div class="pf-section-header">
+      <div class="pf-section-title-wrap">
+        <span class="pf-section-kicker">{{ section.settings.kicker | default: 'The PlayForge Standard' }}</span>
+        <h2 class="pf-section-title">{{ section.settings.heading | default: 'Engine-Ready Architecture' }}</h2>
+        <p class="pf-section-subtitle">
+          {{
+            section.settings.subheading
+            | default: 'Every asset in our catalog undergoes rigorous technical validation to ensure seamless drag-and-drop integration into modern game pipelines.'
+          }}
+        </p>
+      </div>
+    </div>
+
+    <div class="pf-pillars-grid">
+      {%- for block in section.blocks -%}
+        <div class="pf-pillar-card" {{ block.shopify_attributes }}>
+          <span class="pf-pillar-number">0{{ forloop.index }} //</span>
+          <h3 class="pf-pillar-title">{{ block.settings.title }}</h3>
+          <p class="pf-pillar-desc">{{ block.settings.description }}</p>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Why PlayForge",
+  "tag": "section",
+  "class": "pf-why-playforge-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Kicker",
+      "default": "The PlayForge Standard"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Engine-Ready Architecture"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Every asset in our catalog undergoes rigorous technical validation to ensure seamless drag-and-drop integration into modern game pipelines."
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "pillar",
+      "name": "Pipeline Pillar",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Pillar Title",
+          "default": "Game-Ready Topology"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Description",
+          "default": "Clean quads and tris with intentional edge loops, zero non-manifold vertices, optimized silhouette density, and full LOD0 to LOD3 hierarchies."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Why PlayForge",
+      "blocks": [
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Game-Ready Topology",
+            "description": "Clean quads and tris with intentional edge loops, zero non-manifold vertices, optimized silhouette density, and full LOD0 to LOD3 hierarchies."
+          }
+        },
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Calibrated PBR Materials",
+            "description": "100% physically based rendering textures packed for Unreal (ORM: Occlusion/Roughness/Metallic) and Unity (Mask Map) in crisp 2K and 4K resolutions."
+          }
+        },
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Universal Multi-Format Pipeline",
+            "description": "Every model includes native industry-standard exports: FBX, GLB/glTF, OBJ, BLEND, and USDZ for maximum pipeline flexibility."
+          }
+        },
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Commercial-Friendly Licensing",
+            "description": "Straightforward royalty-free commercial licenses. Use assets across unlimited commercial games, interactive apps, and cinematic productions."
+          }
+        },
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Engine Plug-and-Play",
+            "description": "Pre-configured asset prefabs and material instances for Unreal Engine 5 (Nanite & Lumen ready), Unity (URP & HDRP), and Godot 4."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

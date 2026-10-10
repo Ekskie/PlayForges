@@ -1,0 +1,124 @@
+{% comment %}
+  Global Quick View Modal Dialog for PlayForge
+  Renders interactive 3D viewport, comprehensive technical specs, and instant Add-to-Cart.
+
+  Usage:
+  {% render 'playforge-quick-view' %}
+{% endcomment %}
+
+<div id="pf-quickview-modal" class="pf-modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+  <div class="pf-modal-dialog">
+    <button type="button" class="pf-modal-close" data-pf-close-modal aria-label="Close Quick View">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="pf-quickview-layout">
+      <!-- 3D Viewport Column -->
+      <div id="pf-quickview-viewport" class="pf-quickview-viewport pf-viewer-container">
+        <div class="pf-viewer-loader">
+          <div class="pf-spinner"></div>
+          <span class="pf-loader-text">Loading 3D Asset</span>
+        </div>
+        <model-viewer
+          id="pf-quickview-model"
+          src=""
+          poster=""
+          alt="PlayForge 3D Model Asset"
+          camera-controls
+          touch-action="pan-y"
+          auto-rotate
+          shadow-intensity="1"
+          exposure="1.0"
+          interaction-prompt="none"
+          camera-orbit="0deg 75deg 105%"
+          bounds="tight"
+        >
+          <div class="pf-viewer-badge">
+            <span id="pf-quickview-badge">3D INSPECTOR</span>
+          </div>
+
+          <div class="pf-viewer-toolbar">
+            <button type="button" class="pf-toolbar-btn" data-pf-action="reset-camera" title="Reset View" aria-label="Reset View">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+            </button>
+            <button type="button" class="pf-toolbar-btn is-active" data-pf-action="toggle-rotate" title="Toggle Auto-Rotation" aria-label="Toggle Auto-Rotation">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </button>
+            <button type="button" class="pf-toolbar-btn" data-pf-action="toggle-grid" title="Toggle Grid Mode" aria-label="Toggle Grid Mode">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="3" y1="15" x2="21" y2="15"/>
+              </svg>
+            </button>
+            <button type="button" class="pf-toolbar-btn" data-pf-action="toggle-fullscreen" title="Fullscreen" aria-label="Fullscreen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </button>
+          </div>
+        </model-viewer>
+      </div>
+
+      <!-- Details & Add-to-Cart Column -->
+      <div class="pf-quickview-details">
+        <div class="pf-card-meta-top">
+          <span id="pf-qv-category" class="pf-card-category">ASSET PACK</span>
+          <span id="pf-qv-license" class="pf-spec-pill is-format">COMMERCIAL LICENSE</span>
+        </div>
+
+        <h2 id="pf-qv-title" class="pf-section-title" style="font-size: 2.4rem;">Asset Title</h2>
+
+        <div id="pf-qv-price" class="pf-card-price" style="font-size: 2rem;">$0.00</div>
+
+        <p id="pf-qv-desc" class="pf-section-subtitle" style="font-size: 1.4rem; line-height: 1.5;">
+          Production-grade 3D game asset with optimized quad/tri topology and 4K PBR texture sets.
+        </p>
+
+        <!-- Quick Specs Grid -->
+        <div class="pf-specs-table-wrap" style="margin: 12px 0;">
+          <div class="pf-specs-grid">
+            <div class="pf-spec-cell">
+              <span class="pf-spec-label">Formats</span>
+              <span id="pf-qv-format" class="pf-spec-value">FBX / GLB / OBJ</span>
+            </div>
+            <div class="pf-spec-cell">
+              <span class="pf-spec-label">Polycount</span>
+              <span id="pf-qv-poly" class="pf-spec-value">18.4K Triangles</span>
+            </div>
+            <div class="pf-spec-cell">
+              <span class="pf-spec-label">Textures</span>
+              <span id="pf-qv-tex" class="pf-spec-value">4K PBR</span>
+            </div>
+            <div class="pf-spec-cell">
+              <span class="pf-spec-label">Engines</span>
+              <span id="pf-qv-engine" class="pf-spec-value">UE5 / Unity</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add to Cart Form -->
+        <form id="pf-qv-form" action="{{ routes.cart_add_url }}" method="post" enctype="multipart/form-data">
+          <input type="hidden" id="pf-qv-variant-id" name="id" value="">
+          <div style="display: flex; gap: 12px; margin-top: 10px;">
+            <button type="submit" id="pf-qv-submit-btn" class="button button--primary" style="flex: 1;">
+              Add to Cart
+            </button>
+            <a id="pf-qv-full-link" href="#" class="button button--secondary">
+              View Asset
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

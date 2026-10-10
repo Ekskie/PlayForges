@@ -1,0 +1,252 @@
+{% comment %}
+  PlayForge Game-Ready Asset Product Card
+  Features:
+  - Interactive debounced 3D model loading on hover & tap
+  - Cursor-following camera orbit and idle auto-spin
+  - Graceful fallback to static product imagery
+  - Technical metadata (Polycount, Formats, Engine compatibility, Category)
+  - Wishlist / Favorite heart button
+  - Quick View modal trigger
+
+  Accepts:
+  - card_product: {Object} Shopify Product object
+  - section_id: {String} ID of the parent section
+  - show_quick_view: {Boolean} Default: true
+{% endcomment %}
+
+{%- if card_product and card_product != empty -%}
+  {%- liquid
+    # 1. Resolve 3D model source: Metafield -> Native Media -> Curated demo fallback
+    assign model_url = card_product.metafields.custom.model_3d.value | default: card_product.metafields.custom.model_3d
+    
+    if model_url == blank
+      for media in card_product.media
+        if media.media_type == 'model'
+          for source in media.sources
+            if source.format == 'glb' or source.format == 'gltf'
+              assign model_url = source.url
+              break
+            endif
+          endfor
+        endif
+        if model_url != blank
+          break
+        endif
+      endfor
+    endif
+
+    # Curated demo fallbacks for test stores (local high-performance assets)
+    if model_url == blank
+      assign modulo_val = card_product.id | modulo: 3
+      case modulo_val
+        when 0
+          assign model_url = 'pf-model-astronaut.glb' | asset_url
+        when 1
+          assign model_url = 'pf-model-helmet.glb' | asset_url
+        when 2
+          assign model_url = 'pf-model-drone.glb' | asset_url
+      endcase
+    endif
+
+    # 2. Resolve Poster Image
+    assign poster_img_url = card_product.featured_media | image_url: width: 800
+
+    # 3. Resolve Category
+    assign cat_val = card_product.metafields.custom.asset_category.value | default: card_product.metafields.custom.asset_category
+    if cat_val == blank and card_product.type != blank
+      assign cat_val = card_product.type
+    endif
+    if cat_val == blank
+      for tag in card_product.tags
+        if tag contains 'category:'
+          assign cat_val = tag | split: ':' | last
+          break
+        endif
+      endfor
+    endif
+    assign cat_val = cat_val | default: 'PROPS & WEAPONS'
+
+    # 4. Resolve Polycount
+    assign poly_val = card_product.metafields.custom.polycount.value | default: card_product.metafields.custom.polycount
+    if poly_val == blank
+      for tag in card_product.tags
+        if tag contains 'polycount:'
+          assign poly_val = tag | split: ':' | last
+          break
+        endif
+      endfor
+    endif
+    assign poly_val = poly_val | default: '14.2K Δ'
+
+    # 5. Resolve Formats
+    assign format_val = card_product.metafields.custom.asset_format.value | default: card_product.metafields.custom.asset_format
+    if format_val == blank
+      for tag in card_product.tags
+        if tag contains 'format:'
+          assign format_val = tag | split: ':' | last
+          break
+        endif
+      endfor
+    endif
+    assign format_val = format_val | default: 'FBX / GLB'
+
+    # 6. Resolve Engines
+    assign engine_val = card_product.metafields.custom.engine_support.value | default: card_product.metafields.custom.engine_support
+    if engine_val == blank
+      for tag in card_product.tags
+        if tag contains 'engine:'
+          assign engine_val = tag | split: ':' | last
+          break
+        endif
+      endfor
+    endif
+    assign engine_val = engine_val | default: 'UE5 / Unity'
+
+    # 7. Resolve Textures
+    assign tex_val = card_product.metafields.custom.texture_resolution.value | default: card_product.metafields.custom.texture_resolution | default: '4K PBR'
+
+    assign card_id = 'pf-card-' | append: section_id | append: '-' | append: card_product.id
+  -%}
+
+  <div
+    class="pf-card"
+    id="{{ card_id }}"
+    data-product-id="{{ card_product.id }}"
+    data-product-handle="{{ card_product.handle }}"
+    data-model-url="{{ model_url }}"
+    data-poster-url="{{ poster_img_url }}"
+    data-title="{{ card_product.title | escape }}"
+    data-price="{% if card_product.price == 0 %}FREE{% else %}{{ card_product.price | money }}{% endif %}"
+    data-category="{{ cat_val | escape }}"
+    data-poly="{{ poly_val | escape }}"
+    data-format="{{ format_val | escape }}"
+    data-engine="{{ engine_val | escape }}"
+    data-tex="{{ tex_val | escape }}"
+    data-product-url="{{ card_product.url }}"
+    data-variant-id="{{ card_product.selected_or_first_available_variant.id }}"
+    role="link"
+    tabindex="0"
+    aria-label="{{ card_product.title | escape }}"
+  >
+    <!-- Media & 3D Interactive Stage -->
+    <div class="pf-card-media" data-pf-card-media>
+      <!-- Static Poster Image -->
+      {%- if card_product.featured_media -%}
+        <img
+          src="{{ poster_img_url }}"
+          alt="{{ card_product.featured_media.alt | default: card_product.title | escape }}"
+          loading="lazy"
+          class="pf-card-poster"
+          width="500"
+          height="375"
+        >
+      {%- else -%}
+        <div class="pf-card-poster" style="display: flex; align-items: center; justify-content: center; background: #13161c; width: 100%; height: 100%;">
+          {{ 'image' | placeholder_svg_tag }}
+        </div>
+      {%- endif -%}
+
+      <!-- 3D Preview Container (Mounts dynamically on hover/tap) -->
+      {%- if model_url != blank -%}
+        <div class="pf-card-3d-wrap" data-pf-3d-wrap></div>
+
+        <!-- 3D Hint Badge -->
+        <div class="pf-card-tag-3d" title="Hover or tap to inspect in 3D">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+          <span>3D</span>
+        </div>
+      {%- endif -%}
+
+      <!-- Card Hover Action Buttons -->
+      <div class="pf-card-actions">
+        {%- if show_quick_view != false -%}
+          <button
+            type="button"
+            class="pf-card-btn-quickview"
+            data-pf-quickview-btn
+            aria-label="Quick View {{ card_product.title | escape }}"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Quick Inspect</span>
+          </button>
+        {%- endif -%}
+
+        <!-- Wishlist Favorite Button -->
+        <button
+          type="button"
+          class="pf-card-btn-favorite"
+          data-pf-fav-btn="{{ card_product.id }}"
+          title="Save to Wishlist"
+          aria-label="Save to Wishlist"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card Metadata & Information -->
+    <div class="pf-card-info">
+      <div class="pf-card-meta-top">
+        <span class="pf-card-category">{{ cat_val }}</span>
+        <div class="pf-card-price{% if card_product.price == 0 %} is-free{% endif %}">
+          {%- if card_product.price == 0 -%}
+            FREE
+          {%- else -%}
+            {{ card_product.price | money }}
+          {%- endif -%}
+        </div>
+      </div>
+
+      <h3 class="pf-card-title">
+        <a href="{{ card_product.url }}">
+          {{ card_product.title | escape }}
+        </a>
+      </h3>
+
+      <!-- Technical Spec Pills -->
+      <div class="pf-card-specs">
+        <span class="pf-spec-pill is-poly" title="Triangle Polycount">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 22 20 2 20 12 2"/>
+          </svg>
+          {{ poly_val }}
+        </span>
+
+        <span class="pf-spec-pill is-format" title="Included Formats">
+          {{ format_val }}
+        </span>
+
+        <span class="pf-spec-pill" title="Supported Game Engines">
+          {{ engine_val }}
+        </span>
+      </div>
+    </div>
+  </div>
+{%- else -%}
+  <!-- Onboarding Placeholder Card -->
+  <div class="pf-card">
+    <div class="pf-card-media">
+      {{ 'product-1' | placeholder_svg_tag: 'pf-card-poster' }}
+    </div>
+    <div class="pf-card-info">
+      <div class="pf-card-meta-top">
+        <span class="pf-card-category">PROPS</span>
+        <span class="pf-card-price">$24.00</span>
+      </div>
+      <h3 class="pf-card-title">Sample Sci-Fi Asset Pack</h3>
+      <div class="pf-card-specs">
+        <span class="pf-spec-pill is-poly">14.2K Δ</span>
+        <span class="pf-spec-pill is-format">FBX / GLB</span>
+      </div>
+    </div>
+  </div>
+{%- endif -%}

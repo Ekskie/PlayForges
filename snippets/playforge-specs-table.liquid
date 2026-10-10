@@ -1,0 +1,128 @@
+{% comment %}
+  Renders the game-ready Technical Specifications table for PlayForge products.
+  Accepts:
+  - product: {Object} Shopify Product Liquid object
+
+  Usage:
+  {% render 'playforge-specs-table', product: product %}
+{% endcomment %}
+
+{%- liquid
+  # Cascading metafield resolver:
+  assign format_val = product.metafields.custom.asset_format.value | default: product.metafields.custom.asset_format
+  if format_val == blank
+    for tag in product.tags
+      if tag contains 'format:'
+        assign format_val = tag | split: ':' | last | upcase
+        break
+      endif
+    endfor
+  endif
+  assign format_val = format_val | default: 'FBX / GLB / OBJ / BLEND'
+
+  assign engine_val = product.metafields.custom.engine_support.value | default: product.metafields.custom.engine_support
+  if engine_val == blank
+    for tag in product.tags
+      if tag contains 'engine:'
+        assign engine_val = tag | split: ':' | last
+        break
+      endif
+    endfor
+  endif
+  assign engine_val = engine_val | default: 'Unreal Engine 5 / Unity / Godot / Blender'
+
+  assign polycount_val = product.metafields.custom.polycount.value | default: product.metafields.custom.polycount
+  if polycount_val == blank
+    for tag in product.tags
+      if tag contains 'polycount:'
+        assign polycount_val = tag | split: ':' | last
+        break
+      endif
+    endfor
+  endif
+  assign polycount_val = polycount_val | default: '18,400 Triangles (LOD0 - LOD3)'
+
+  assign texture_val = product.metafields.custom.texture_resolution.value | default: product.metafields.custom.texture_resolution
+  if texture_val == blank
+    for tag in product.tags
+      if tag contains 'texture:'
+        assign texture_val = tag | split: ':' | last
+        break
+      endif
+    endfor
+  endif
+  assign texture_val = texture_val | default: '4K PBR (Albedo, Normal, Roughness, Metalness, AO)'
+
+  assign rigged_val = product.metafields.custom.rigged.value | default: product.metafields.custom.rigged
+  if rigged_val == blank
+    for tag in product.tags
+      if tag contains 'rigged:'
+        assign rigged_val = tag | split: ':' | last
+        break
+      endif
+    endfor
+  endif
+  assign rigged_val = rigged_val | default: 'Yes — Clean Bone Hierarchy'
+
+  assign animated_val = product.metafields.custom.animated.value | default: product.metafields.custom.animated
+  if animated_val == blank
+    for tag in product.tags
+      if tag contains 'animated:'
+        assign animated_val = tag | split: ':' | last
+        break
+      endif
+    endfor
+  endif
+  assign animated_val = animated_val | default: '12 In-Place & Root Motion Clips'
+
+  assign license_val = product.metafields.custom.license_type.value | default: product.metafields.custom.license_type | default: 'Commercial Royalty-Free'
+-%}
+
+<div class="pf-specs-table-wrap">
+  <div class="pf-specs-header">
+    <h3>Technical Specifications</h3>
+    <span class="pf-spec-label">Inspection Validated</span>
+  </div>
+
+  <div class="pf-specs-grid">
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">File Formats</span>
+      <span class="pf-spec-value">{{ format_val }}</span>
+    </div>
+
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">Engine Compatibility</span>
+      <span class="pf-spec-value">{{ engine_val }}</span>
+    </div>
+
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">Polycount / Triangles</span>
+      <span class="pf-spec-value">{{ polycount_val }}</span>
+    </div>
+
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">Textures & Maps</span>
+      <span class="pf-spec-value">{{ texture_val }}</span>
+    </div>
+
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">Rigged</span>
+      <span class="pf-spec-value">{{ rigged_val }}</span>
+    </div>
+
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">Animations</span>
+      <span class="pf-spec-value">{{ animated_val }}</span>
+    </div>
+
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">Topology</span>
+      <span class="pf-spec-value">Quad/Tri Optimized, Zero Non-Manifold</span>
+    </div>
+
+    <div class="pf-spec-cell">
+      <span class="pf-spec-label">License Type</span>
+      <span class="pf-spec-value" style="color: var(--pf-accent);">{{ license_val }}</span>
+    </div>
+  </div>
+</div>

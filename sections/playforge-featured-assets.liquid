@@ -1,0 +1,132 @@
+{% comment %}
+  PlayForge Featured Assets Section
+  Renders Shopify products with live 3D hover preview cards and technical spec pills.
+{% endcomment %}
+
+{%- liquid
+  assign collection = section.settings.collection
+  assign products_to_show = section.settings.products_to_show | default: 8
+-%}
+
+<div class="pf-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+  <div class="pf-container">
+    <div class="pf-section-header">
+      <div class="pf-section-title-wrap">
+        <span class="pf-section-kicker">{{ section.settings.kicker | default: 'Verified Game Models' }}</span>
+        <h2 class="pf-section-title">{{ section.settings.heading | default: 'Featured 3D Assets' }}</h2>
+        <p class="pf-section-subtitle">{{ section.settings.subheading | default: 'Hover over any asset to inspect topology and materials in real-time 3D.' }}</p>
+      </div>
+
+      {%- if section.settings.view_all_link != blank or collection != blank -%}
+        <a href="{{ section.settings.view_all_link | default: collection.url }}" class="button button--secondary">
+          {{ section.settings.view_all_label | default: 'Browse All' }}
+        </a>
+      {%- endif -%}
+    </div>
+
+    <div class="pf-product-grid">
+      {%- if collection != blank and collection.products.size > 0 -%}
+        {%- for product in collection.products limit: products_to_show -%}
+          {% render 'playforge-card-product',
+            card_product: product,
+            section_id: section.id,
+            show_quick_view: true
+          %}
+        {%- endfor -%}
+      {%- elsif collections.all.products.size > 0 -%}
+        {%- for product in collections.all.products limit: products_to_show -%}
+          {% render 'playforge-card-product',
+            card_product: product,
+            section_id: section.id,
+            show_quick_view: true
+          %}
+        {%- endfor -%}
+      {%- else -%}
+        {%- for i in (1..6) -%}
+          {% render 'playforge-card-product',
+            card_product: empty,
+            section_id: section.id
+          %}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Featured 3D Assets",
+  "tag": "section",
+  "class": "pf-featured-assets-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Kicker",
+      "default": "Verified Game Models"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Featured 3D Assets"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Hover over any asset to inspect topology and materials in real-time 3D."
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 16,
+      "step": 2,
+      "default": 8,
+      "label": "Products to Show"
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "View All Button Label",
+      "default": "Browse All Assets"
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "View All Link"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured 3D Assets"
+    }
+  ]
+}
+{% endschema %}

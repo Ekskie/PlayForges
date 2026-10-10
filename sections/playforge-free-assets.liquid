@@ -1,0 +1,145 @@
+{% comment %}
+  PlayForge Free Assets Section
+  Showcases free and $0 starter models for developers to test topology and pipeline integration.
+{% endcomment %}
+
+{%- liquid
+  assign collection = section.settings.collection
+  assign limit_val = section.settings.products_to_show | default: 4
+-%}
+
+<div id="free-assets" class="pf-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+  <div class="pf-container">
+    <div class="pf-section-header">
+      <div class="pf-section-title-wrap">
+        <span class="pf-section-kicker" style="color: var(--pf-accent-secondary);">{{ section.settings.kicker | default: '$0 Starter Models' }}</span>
+        <h2 class="pf-section-title">{{ section.settings.heading | default: 'Free Developer Assets' }}</h2>
+        <p class="pf-section-subtitle">{{ section.settings.subheading | default: 'Test our quad topology, calibrated PBR shaders, and LOD hierarchies directly inside your game engine at zero cost.' }}</p>
+      </div>
+
+      {%- if section.settings.view_all_link != blank -%}
+        <a href="{{ section.settings.view_all_link }}" class="button button--secondary">
+          {{ section.settings.view_all_label | default: 'View All Free' }}
+        </a>
+      {%- endif -%}
+    </div>
+
+    <div class="pf-product-grid">
+      {%- if collection != blank and collection.products.size > 0 -%}
+        {%- for product in collection.products limit: limit_val -%}
+          {% render 'playforge-card-product',
+            card_product: product,
+            section_id: section.id,
+            show_quick_view: true
+          %}
+        {%- endfor -%}
+      {%- elsif collections.all.products.size > 0 -%}
+        {%- assign free_count = 0 -%}
+        {%- for product in collections.all.products -%}
+          {%- if product.price == 0 and free_count < limit_val -%}
+            {% render 'playforge-card-product',
+              card_product: product,
+              section_id: section.id,
+              show_quick_view: true
+            %}
+            {%- assign free_count = free_count | plus: 1 -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if free_count == 0 -%}
+          {%- for product in collections.all.products limit: limit_val -%}
+            {% render 'playforge-card-product',
+              card_product: product,
+              section_id: section.id,
+              show_quick_view: true
+            %}
+          {%- endfor -%}
+        {%- endif -%}
+      {%- else -%}
+        {%- for i in (1..limit_val) -%}
+          {% render 'playforge-card-product',
+            card_product: empty,
+            section_id: section.id
+          %}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Free Assets",
+  "tag": "section",
+  "class": "pf-free-assets-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Kicker",
+      "default": "$0 Starter Models"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Free Developer Assets"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Test our quad topology, calibrated PBR shaders, and LOD hierarchies directly inside your game engine at zero cost."
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Free Collection (Optional)"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 8,
+      "step": 2,
+      "default": 4,
+      "label": "Assets to Show"
+    },
+    {
+      "type": "text",
+      "id": "view_all_label",
+      "label": "Button Label",
+      "default": "Explore Free Library"
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "Button Link"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Free Assets"
+    }
+  ]
+}
+{% endschema %}
