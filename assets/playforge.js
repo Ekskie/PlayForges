@@ -15,18 +15,31 @@
   // State
   const activeViewers = new Map();
   let hoverTimeout = null;
+  let viewSwitcherDelegated = false;
+  let sortDropdownInitialized = false;
+  let cardNavInitialized = false;
+
+  function safeInit(name, fn) {
+    try {
+      fn();
+    } catch (err) {
+      console.warn(`[PlayForge] ${name} initialization error:`, err);
+    }
+  }
 
   // Initialize once DOM is ready
   function initAll() {
-    initThemeSwitcher();
-    initProductCardNavigation();
-    initProductCardPreviews();
-    initQuickViewModal();
-    initViewportControls();
-    initModelViewerLoaders();
-    initWishlist();
-    initViewSwitcher();
-    initCartRecommendations();
+    safeInit('ThemeSwitcher', initThemeSwitcher);
+    safeInit('ProductCardNavigation', initProductCardNavigation);
+    safeInit('ProductCardPreviews', initProductCardPreviews);
+    safeInit('QuickViewModal', initQuickViewModal);
+    safeInit('ViewportControls', initViewportControls);
+    safeInit('ModelViewerLoaders', initModelViewerLoaders);
+    safeInit('Wishlist', initWishlist);
+    safeInit('ViewSwitcher', initViewSwitcher);
+    safeInit('CartRecommendations', initCartRecommendations);
+    safeInit('CustomSortDropdown', initCustomSortDropdown);
+    safeInit('AjaxGridObserver', initAjaxGridObserver);
   }
 
   if (document.readyState === 'loading') {
@@ -43,6 +56,9 @@
      - Preserves Ctrl+Click / Cmd+Click / Middle-Click to open in new tab
      ========================================================================== */
   function initProductCardNavigation() {
+    if (cardNavInitialized) return;
+    cardNavInitialized = true;
+
     const handleCardNavigation = (e) => {
       const card = e.target.closest('.pf-card');
       if (!card) return;
@@ -101,6 +117,8 @@
       const modelUrl = card.dataset.modelUrl;
       const posterUrl = card.dataset.posterUrl;
       if (!media || !wrap || !modelUrl) return;
+      if (card.__pfPreviewInit) return;
+      card.__pfPreviewInit = true;
 
       let modelViewer = null;
       let isModelLoaded = false;
@@ -601,28 +619,6 @@
     });
   }
 
-  /* ==========================================================================
-     5. GRID / LIST COLLECTION LAYOUT SWITCHER
-     ========================================================================== */
-  function initViewSwitcher() {
-    const grid = document.querySelector('.pf-product-grid');
-    const btns = document.querySelectorAll('.pf-view-btn');
-    if (!grid || !btns.length) return;
-
-    btns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const mode = btn.dataset.view;
-        btns.forEach((b) => b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-
-        if (mode === 'list') {
-          grid.classList.add('is-list-view');
-        } else {
-          grid.classList.remove('is-list-view');
-        }
-      });
-    });
-  }
 
   /* ==========================================================================
      6. CART DRAWER "COMPLETE YOUR ENVIRONMENT" RECOMMENDATIONS
@@ -707,45 +703,45 @@
   /* ==========================================================================
      7.5 ASSET BROWSER VIEW SWITCHER (GRID vs DETAILED LIST)
      - Switches between 3D grid cards and detailed studio list layout
+     - Document event delegation so view mode survives Shopify AJAX reloads
      - Persists choice in localStorage ('pf-asset-view-mode')
      ========================================================================== */
-  function initViewSwitcher() {
-    const viewButtons = document.querySelectorAll('.pf-view-btn');
-    const productGrid = document.getElementById('product-grid');
-    if (!viewButtons.length || !productGrid) return;
+  function applyAssetViewMode(mode) {
+    const activeMode = mode === 'list' ? 'list' : 'grid';
+    const grid = document.querySelector('.pf-product-grid') || document.getElementById('product-grid');
+    if (grid) {
+      grid.classList.toggle('is-list-view', activeMode === 'list');
+    }
 
-    const setView = (mode) => {
-      viewButtons.forEach((btn) => {
-        const isActive = btn.dataset.view === mode;
-        btn.classList.toggle('is-active', isActive);
-        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-      });
-
-      if (mode === 'list') {
-        productGrid.classList.add('is-list-view');
-      } else {
-        productGrid.classList.remove('is-list-view');
-      }
-
-      try {
-        localStorage.setItem('pf-asset-view-mode', mode);
-      } catch (e) {}
-    };
-
-    viewButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const targetView = btn.dataset.view;
-        if (targetView) setView(targetView);
-      });
+    document.querySelectorAll('.pf-view-btn').forEach((btn) => {
+      const isActive = btn.dataset.view === activeMode;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 
-    // Restore saved view preference
     try {
-      const saved = localStorage.getItem('pf-asset-view-mode');
-      if (saved === 'list' || saved === 'grid') {
-        setView(saved);
-      }
+      localStorage.setItem('pf-asset-view-mode', activeMode);
     } catch (e) {}
+  }
+
+  function initViewSwitcher() {
+    // Restore and re-apply saved view preference
+    try {
+      const saved = localStorage.getItem('pf-asset-view-mode') || 'grid';
+      applyAssetViewMode(saved);
+    } catch (e) {}
+
+    if (viewSwitcherDelegated) return;
+    viewSwitcherDelegated = true;
+
+    // Delegated click on document so re-rendered AJAX buttons always work
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pf-view-btn');
+      if (!btn) return;
+      e.preventDefault();
+      const targetView = btn.dataset.view;
+      if (targetView) applyAssetViewMode(targetView);
+    });
   }
 
   /* ==========================================================================
@@ -842,4 +838,272 @@
     applyTheme(currentTheme, false);
   }
 
+  /* ==========================================================================
+     11. CUSTOM EDITORIAL SORT DROPDOWN (Replaces OS Native Select)
+     - Interactive popover listbox with full theme awareness
+     - Bi-directional synchronization with hidden native <select name="sort_by">
+     - Fires bubbling 'input'/'change' events to seamlessly trigger FacetFiltersForm AJAX reload
+     - Full keyboard navigation (Arrow Up/Down, Enter/Space, Escape) & click-outside
+     ========================================================================== */
+  function initCustomSortDropdown() {
+    if (sortDropdownInitialized) {
+      syncAllDropdownsFromNative();
+      return;
+    }
+    sortDropdownInitialized = true;
+
+    // Helper: Close a dropdown (handles both <details> and .is-open <div>)
+    function closeDropdown(dropdown) {
+      if (dropdown.tagName === 'DETAILS') {
+        dropdown.open = false;
+        dropdown.removeAttribute('open');
+      }
+      dropdown.classList.remove('is-open');
+      const trigger = dropdown.querySelector('[data-pf-sort-trigger]');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    // Helper: Open a dropdown
+    function openDropdown(dropdown) {
+      // Close other dropdowns first
+      document.querySelectorAll('[data-pf-sort-dropdown]').forEach((dd) => {
+        if (dd !== dropdown) closeDropdown(dd);
+      });
+
+      if (dropdown.tagName === 'DETAILS') {
+        dropdown.open = true;
+        dropdown.setAttribute('open', '');
+      } else {
+        dropdown.classList.add('is-open');
+      }
+      const trigger = dropdown.querySelector('[data-pf-sort-trigger]');
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    // Helper: Sync UI state
+    function syncDropdownUI(dropdown, val, label) {
+      dropdown.querySelectorAll('.pf-sort-option').forEach((opt) => {
+        const isMatch = opt.dataset.value === val;
+        opt.classList.toggle('is-selected', isMatch);
+        opt.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+      });
+
+      const labelSpan = dropdown.querySelector('[data-pf-sort-label]');
+      if (labelSpan && label) {
+        labelSpan.textContent = label;
+      }
+      const trigger = dropdown.querySelector('[data-pf-sort-trigger]');
+      if (trigger && label) {
+        trigger.setAttribute('aria-label', `Sort by: ${label}`);
+      }
+    }
+
+    // Helper: Select an option and trigger Shopify AJAX
+    function selectOption(dropdown, val, label) {
+      syncDropdownUI(dropdown, val, label);
+
+      const nativeSelect = dropdown.querySelector('select[name="sort_by"]')
+        || dropdown.closest('form')?.querySelector('select[name="sort_by"]')
+        || document.querySelector('select[name="sort_by"]');
+
+      if (nativeSelect) {
+        nativeSelect.value = val;
+        // Dispatch bubbling input and change events for FacetFiltersForm AJAX reload
+        nativeSelect.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        nativeSelect.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+
+        // Fallback: If not inside a facet-filters-form custom element, submit form
+        const parentFacetForm = nativeSelect.closest('facet-filters-form');
+        if (!parentFacetForm && nativeSelect.form) {
+          nativeSelect.form.submit();
+        }
+      }
+    }
+
+    // Close any other open dropdown when another <details> is opened
+    document.addEventListener('toggle', (e) => {
+      const target = e.target;
+      if (target && target.matches && target.matches('details[data-pf-sort-dropdown]') && target.open) {
+        document.querySelectorAll('details[data-pf-sort-dropdown][open]').forEach((other) => {
+          if (other !== target) closeDropdown(other);
+        });
+      }
+    }, true);
+
+    // Global Click Handler: delegation for options, triggers, and clicking outside
+    document.addEventListener('click', (e) => {
+      // 1. Option Button Clicked
+      const optionBtn = e.target.closest('.pf-sort-option');
+      if (optionBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdown = optionBtn.closest('[data-pf-sort-dropdown]');
+        if (!dropdown) return;
+
+        const val = optionBtn.dataset.value;
+        const label = optionBtn.dataset.label;
+        selectOption(dropdown, val, label);
+        closeDropdown(dropdown);
+
+        const trg = dropdown.querySelector('[data-pf-sort-trigger]');
+        if (trg) trg.focus();
+        return;
+      }
+
+      // 2. Trigger Button Clicked (only needed for non-<details> fallback)
+      const trigger = e.target.closest('[data-pf-sort-trigger]');
+      if (trigger && trigger.tagName !== 'SUMMARY') {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdown = trigger.closest('[data-pf-sort-dropdown]');
+        if (!dropdown) return;
+
+        const isOpen = dropdown.hasAttribute('open') || dropdown.classList.contains('is-open');
+        if (isOpen) {
+          closeDropdown(dropdown);
+        } else {
+          openDropdown(dropdown);
+        }
+        return;
+      }
+
+      // 3. Clicked Outside any sort dropdown
+      if (!e.target.closest('[data-pf-sort-dropdown]')) {
+        document.querySelectorAll('[data-pf-sort-dropdown]').forEach((dd) => {
+          if (dd.hasAttribute('open') || dd.classList.contains('is-open')) {
+            closeDropdown(dd);
+          }
+        });
+      }
+    });
+
+    // Global Keyboard Navigation
+    document.addEventListener('keydown', (e) => {
+      // Escape closes all open dropdowns
+      if (e.key === 'Escape') {
+        document.querySelectorAll('[data-pf-sort-dropdown]').forEach((dd) => {
+          if (dd.hasAttribute('open') || dd.classList.contains('is-open')) {
+            closeDropdown(dd);
+            const trg = dd.querySelector('[data-pf-sort-trigger]');
+            if (trg) trg.focus();
+          }
+        });
+        return;
+      }
+
+      const dropdown = e.target.closest('[data-pf-sort-dropdown]');
+      if (!dropdown) return;
+
+      const trigger = dropdown.querySelector('[data-pf-sort-trigger]');
+      const options = Array.from(dropdown.querySelectorAll('.pf-sort-option'));
+      const isOpen = dropdown.hasAttribute('open') || dropdown.classList.contains('is-open');
+
+      // Trigger / Summary focused
+      if (e.target === trigger) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (!isOpen) openDropdown(dropdown);
+          const firstActive = dropdown.querySelector('.pf-sort-option.is-selected') || options[0];
+          if (firstActive) firstActive.focus();
+        }
+        return;
+      }
+
+      // Option button focused
+      if (isOpen && e.target.classList.contains('pf-sort-option')) {
+        const currentIndex = options.indexOf(e.target);
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const nextIndex = (currentIndex + 1) % options.length;
+          options[nextIndex].focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prevIndex = (currentIndex - 1 + options.length) % options.length;
+          options[prevIndex].focus();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const val = e.target.dataset.value;
+          const label = e.target.dataset.label;
+          selectOption(dropdown, val, label);
+          closeDropdown(dropdown);
+          if (trigger) trigger.focus();
+        } else if (e.key === 'Tab') {
+          closeDropdown(dropdown);
+        }
+      }
+    });
+
+    // Sync on external native select change (e.g. from popstate or reset)
+    document.addEventListener('change', (e) => {
+      if (e.target && e.target.matches && e.target.matches('select[name="sort_by"]')) {
+        const dropdown = e.target.closest('[data-pf-sort-dropdown]');
+        if (!dropdown) return;
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        if (selectedOption) {
+          syncDropdownUI(dropdown, selectedOption.value, selectedOption.text);
+        }
+      }
+    });
+
+    syncAllDropdownsFromNative();
+  }
+
+  function syncAllDropdownsFromNative() {
+    document.querySelectorAll('[data-pf-sort-dropdown]').forEach((dropdown) => {
+      const nativeSelect = dropdown.querySelector('select[name="sort_by"]');
+      if (nativeSelect && nativeSelect.selectedIndex >= 0) {
+        const selectedOption = nativeSelect.options[nativeSelect.selectedIndex];
+        if (selectedOption) {
+          const val = selectedOption.value;
+          const label = selectedOption.text;
+          dropdown.querySelectorAll('.pf-sort-option').forEach((opt) => {
+            const isMatch = opt.dataset.value === val;
+            opt.classList.toggle('is-selected', isMatch);
+            opt.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+          });
+          const labelSpan = dropdown.querySelector('[data-pf-sort-label]');
+          if (labelSpan) labelSpan.textContent = label;
+        }
+      }
+    });
+  }
+
+  /* ==========================================================================
+     12. AJAX RE-HYDRATION OBSERVER
+     - Re-applies grid/list mode and 3D preview listeners when Shopify Dawn FacetFiltersForm
+       re-renders #ProductGridContainer via AJAX
+     ========================================================================== */
+  function initAjaxGridObserver() {
+    const gridContainer = document.getElementById('ProductGridContainer');
+    if (!gridContainer || gridContainer.__pfObserver) return;
+    gridContainer.__pfObserver = true;
+
+    const observer = new MutationObserver((mutations) => {
+      let hasAddedNodes = false;
+      for (const m of mutations) {
+        if (m.type === 'childList' && m.addedNodes.length > 0) {
+          hasAddedNodes = true;
+          break;
+        }
+      }
+      if (hasAddedNodes) {
+        // Re-apply saved view mode (grid vs list)
+        try {
+          const saved = localStorage.getItem('pf-asset-view-mode') || 'grid';
+          applyAssetViewMode(saved);
+        } catch (e) {}
+
+        // Re-bind 3D previews to new cards
+        safeInit('ProductCardPreviews', initProductCardPreviews);
+
+        // Sync dropdown labels
+        syncAllDropdownsFromNative();
+      }
+    });
+
+    observer.observe(gridContainer, { childList: true, subtree: true });
+  }
+
 })();
+

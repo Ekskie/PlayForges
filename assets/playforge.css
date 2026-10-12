@@ -146,6 +146,7 @@ body, html {
   letter-spacing: -0.012em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -155,6 +156,27 @@ h1, h2, h3, h4, h5, h6,
   letter-spacing: -0.025em;
   font-weight: 600;
   text-transform: none; /* Natural case, not uppercase! */
+  text-wrap: balance;
+}
+
+p,
+.pf-hero-desc,
+.pf-section-subtitle,
+.pf-standard-desc {
+  text-wrap: pretty;
+}
+
+/* Tabular figures for technical data, pricing, and metrics */
+.pf-font-mono,
+.pf-card-price,
+.price,
+.price-item,
+.pf-spec-val,
+.pf-standard-num,
+.cart-count-bubble,
+.pf-spec-pill,
+.pf-spec-metric {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Technical scrollbar */
@@ -461,6 +483,21 @@ a[aria-current="page"] .header__active-menu-item {
   transform: translateY(-1px);
 }
 
+.button:active,
+.button--primary:active,
+.pf-btn-primary:active {
+  transform: translateY(1px) scale(0.985) !important;
+  transition-duration: 0.08s !important;
+}
+
+.button:focus-visible,
+.button--primary:focus-visible,
+.pf-btn-primary:focus-visible {
+  outline: 2px solid var(--pf-accent) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 4px var(--pf-accent-subtle) !important;
+}
+
 .button--secondary,
 .pf-btn-secondary {
   background-color: var(--pf-bg-surface) !important;
@@ -487,6 +524,19 @@ a[aria-current="page"] .header__active-menu-item {
   border-color: var(--pf-border-strong) !important;
   color: var(--pf-heading-color) !important;
   transform: translateY(-1px);
+}
+
+.button--secondary:active,
+.pf-btn-secondary:active {
+  transform: translateY(1px) scale(0.985) !important;
+  transition-duration: 0.08s !important;
+}
+
+.button--secondary:focus-visible,
+.pf-btn-secondary:focus-visible {
+  outline: 2px solid var(--pf-accent) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 4px var(--pf-accent-subtle) !important;
 }
 
 /* ==========================================================================
@@ -654,20 +704,22 @@ a[aria-current="page"] .header__active-menu-item {
 
 .pf-hero-kicker {
   font-family: var(--pf-font-mono);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  font-weight: 600;
   color: var(--pf-text-secondary);
-  letter-spacing: 0.04em;
-  text-transform: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .pf-hero-title {
   font-size: clamp(3.4rem, 4.4vw, 5.2rem);
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.08;
   letter-spacing: -0.035em;
   color: var(--pf-heading-color);
   margin: 0;
   text-transform: none;
+  text-wrap: balance;
 }
 
 .pf-hero-desc {
@@ -676,6 +728,7 @@ a[aria-current="page"] .header__active-menu-item {
   color: var(--pf-text-secondary);
   margin: 0;
   max-width: 480px;
+  text-wrap: pretty;
 }
 
 .pf-hero-actions {
@@ -690,9 +743,10 @@ a[aria-current="page"] .header__active-menu-item {
   width: 100%;
   aspect-ratio: 16 / 11;
   min-height: 460px;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 90, 31, 0.06) 0%, transparent 72%) !important;
+  border: 1px solid var(--pf-border-subtle) !important;
+  border-radius: var(--pf-radius-md) !important;
+  box-shadow: var(--pf-shadow-card) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -722,9 +776,9 @@ a[aria-current="page"] .header__active-menu-item {
   cursor: pointer;
 }
 .pf-card:hover {
-  border-color: var(--pf-border-strong);
-  transform: translateY(-2px);
-  box-shadow: var(--pf-shadow-subtle);
+  border-color: rgba(255, 90, 31, 0.35) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 90, 31, 0.15) !important;
 }
 
 .pf-card-media {
@@ -737,6 +791,14 @@ a[aria-current="page"] .header__active-menu-item {
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid var(--pf-border-subtle);
+}
+
+.pf-card-poster-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .pf-card-poster {
@@ -968,9 +1030,10 @@ a[aria-current="page"] .header__active-menu-item {
 .pf-section-kicker {
   font-family: var(--pf-font-mono);
   font-size: 1.15rem;
+  font-weight: 600;
   color: var(--pf-text-secondary);
-  letter-spacing: 0.04em;
-  text-transform: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .pf-section-title {
   font-size: clamp(2.4rem, 3.2vw, 3.4rem);
@@ -979,6 +1042,7 @@ a[aria-current="page"] .header__active-menu-item {
   color: var(--pf-heading-color);
   letter-spacing: -0.03em;
   text-transform: none;
+  text-wrap: balance;
 }
 .pf-section-subtitle {
   font-size: 1.55rem;
@@ -986,6 +1050,7 @@ a[aria-current="page"] .header__active-menu-item {
   margin: 0;
   max-width: 580px;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 /* Varied Editorial Showcase Grid (Featured Assets) */
@@ -1053,10 +1118,10 @@ a[aria-current="page"] .header__active-menu-item {
 }
 
 .pf-cat-tile:hover {
-  border-color: var(--pf-accent);
+  border-color: rgba(255, 90, 31, 0.45);
   background: var(--pf-bg-surface-subtle);
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(255, 90, 31, 0.08);
+  box-shadow: 0 6px 18px -4px rgba(255, 90, 31, 0.12);
 }
 
 .pf-cat-tile__left {
@@ -1346,71 +1411,6 @@ a[aria-current="page"] .header__active-menu-item {
   color: var(--pf-heading-color);
 }
 
-/* ==========================================================================
-   11. ASSET BROWSER CONTROLS (COLLECTION & SEARCH)
-   ========================================================================== */
-
-.pf-browser-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
-  background: var(--pf-bg-surface);
-  border: 1px solid var(--pf-border);
-  border-radius: var(--pf-radius-md);
-  margin-bottom: 24px;
-}
-.pf-browser-count {
-  font-size: 1.35rem;
-  color: var(--pf-text-secondary);
-}
-.pf-browser-count strong {
-  color: var(--pf-heading-color);
-}
-
-.pf-browser-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.pf-view-toggle {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--pf-border);
-  border-radius: var(--pf-radius-sm);
-  overflow: hidden;
-}
-.pf-view-btn {
-  background: transparent;
-  border: none;
-  color: var(--pf-text-secondary);
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: var(--pf-transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.pf-view-btn.is-active {
-  background: var(--pf-bg-surface-elevated);
-  color: var(--pf-text-primary);
-}
-
-/* List view mode */
-.pf-product-grid.is-list-view {
-  grid-template-columns: 1fr;
-}
-.pf-product-grid.is-list-view .pf-card {
-  flex-direction: row;
-}
-.pf-product-grid.is-list-view .pf-card-media {
-  width: 260px;
-  aspect-ratio: auto;
-  flex-shrink: 0;
-  border-bottom: none;
-  border-right: 1px solid var(--pf-border-subtle);
-}
 
 /* ==========================================================================
    12. QUICK VIEW MODAL & CART DRAWER
@@ -1595,59 +1595,222 @@ a[aria-current="page"] .header__active-menu-item {
   transition: var(--pf-transition);
 }
 
+/* Grid View default: ensure right list-aside is hidden */
+.pf-card .pf-card-list-aside {
+  display: none !important;
+}
+
 /* Professional Studio List View Mode */
 .pf-product-grid.is-list-view {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
 }
 
 .pf-product-grid.is-list-view .pf-card {
-  display: grid;
-  grid-template-columns: 220px 1fr auto;
-  align-items: center;
-  gap: 20px;
-  flex-direction: row;
-  min-height: 120px;
+  display: grid !important;
+  grid-template-columns: 190px 1fr auto !important;
+  align-items: center !important;
+  gap: 22px !important;
+  padding: 14px 18px !important;
+  min-height: 124px !important;
+  border-radius: var(--pf-radius-md) !important;
+  background-color: var(--pf-bg-surface) !important;
+  border: 1px solid var(--pf-border) !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease !important;
 }
 
+.pf-product-grid.is-list-view .pf-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(255, 90, 31, 0.4) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 90, 31, 0.2) !important;
+}
+
+/* 1. Media Thumbnail in List View */
 .pf-product-grid.is-list-view .pf-card-media {
-  width: 220px;
-  height: 100%;
-  aspect-ratio: unset;
-  border-bottom: none;
-  border-right: 1px solid var(--pf-border-subtle);
+  width: 190px !important;
+  height: 120px !important;
+  aspect-ratio: unset !important;
+  border-radius: var(--pf-radius-sm) !important;
+  border: 1px solid var(--pf-border-subtle) !important;
+  overflow: hidden !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
 }
 
-.pf-product-grid.is-list-view .pf-card-info {
-  padding: 16px;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
+.pf-product-grid.is-list-view .pf-card-poster-link {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
 }
 
+.pf-product-grid.is-list-view .pf-card-poster {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* In list view, hide the media-overlay actions because dedicated actions are in the right column */
 .pf-product-grid.is-list-view .pf-card-actions {
-  position: static;
-  opacity: 1;
-  transform: none;
-  padding-right: 20px;
-  flex-direction: column;
-  width: auto;
+  display: none !important;
 }
 
-@media (max-width: 768px) {
+.pf-product-grid.is-list-view .pf-card-tag-3d {
+  top: 8px !important;
+  right: 8px !important;
+}
+
+/* 2. Middle Content in List View */
+.pf-product-grid.is-list-view .pf-card-info {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+/* Hide top-meta price in list view since right column displays it prominently */
+.pf-product-grid.is-list-view .pf-card-info .pf-card-price {
+  display: none !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-category {
+  font-family: var(--pf-font-mono) !important;
+  font-size: 1.15rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--pf-text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-title {
+  font-size: 1.7rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-title a {
+  color: var(--pf-heading-color) !important;
+  text-decoration: none !important;
+  transition: color 0.15s ease !important;
+}
+
+.pf-product-grid.is-list-view .pf-card:hover .pf-card-title a {
+  color: var(--pf-accent) !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-specs {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin-top: 2px !important;
+}
+
+.pf-product-grid.is-list-view .pf-spec-pill {
+  font-size: 1.15rem !important;
+  padding: 3px 8px !important;
+}
+
+/* 3. Right Aside Column in List View */
+.pf-product-grid.is-list-view .pf-card-list-aside {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  padding-left: 12px !important;
+  min-width: 180px !important;
+  flex-shrink: 0 !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-list-price {
+  font-family: var(--pf-font-mono) !important;
+  font-size: 1.9rem !important;
+  font-weight: 700 !important;
+  color: var(--pf-heading-color) !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.02em !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-list-price.is-free {
+  color: var(--pf-accent) !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-list-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-quickview {
+  background-color: var(--pf-bg-surface-elevated) !important;
+  border: 1px solid var(--pf-border) !important;
+  color: var(--pf-heading-color) !important;
+  padding: 7px 14px !important;
+  font-size: 1.25rem !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  border-radius: var(--pf-radius-sm) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-quickview:hover {
+  background-color: var(--pf-accent) !important;
+  border-color: var(--pf-accent) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(255, 90, 31, 0.35) !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-favorite {
+  width: 36px !important;
+  height: 36px !important;
+  background-color: var(--pf-bg-surface-elevated) !important;
+  border: 1px solid var(--pf-border) !important;
+  color: var(--pf-text-secondary) !important;
+  border-radius: var(--pf-radius-sm) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-favorite:hover,
+.pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-favorite.is-favorited {
+  color: #ff3366 !important;
+  border-color: #ff3366 !important;
+  background-color: rgba(255, 51, 102, 0.08) !important;
+}
+
+/* Responsive List View on Mobile / Tablet */
+@media (max-width: 860px) {
   .pf-product-grid.is-list-view .pf-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: 140px 1fr !important;
+    gap: 16px !important;
+    padding: 12px 14px !important;
   }
   .pf-product-grid.is-list-view .pf-card-media {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    border-right: none;
-    border-bottom: 1px solid var(--pf-border-subtle);
+    width: 140px !important;
+    height: 105px !important;
   }
-  .pf-product-grid.is-list-view .pf-card-actions {
-    padding: 0 16px 16px 16px;
-    flex-direction: row;
+  .pf-product-grid.is-list-view .pf-card-list-aside {
+    grid-column: 1 / -1 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-left: 0 !important;
+    border-top: 1px solid var(--pf-border-subtle) !important;
+    padding-top: 10px !important;
+    margin-top: 4px !important;
+    min-width: 0 !important;
   }
 }
 
@@ -1741,21 +1904,305 @@ a[aria-current="page"] .header__active-menu-item {
   text-decoration: none !important;
 }
 
-/* Sort & Filter Select Dropdowns */
+/* ==========================================================================
+   CUSTOM EDITORIAL SORT DROPDOWN (Replaces Browser OS Native Select)
+   ========================================================================== */
+
+/* Parent sorting containers: must not clip and float above product grid */
+.facets-vertical-sort,
+.facets-vertical-form,
+.facet-filters.sorting,
+.facet-filters__field {
+  position: relative !important;
+  z-index: 100 !important;
+  overflow: visible !important;
+}
+
+.pf-sort-dropdown,
+details.pf-sort-dropdown {
+  position: relative !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  z-index: 100 !important;
+}
+
+/* Details and Summary reset */
+details.pf-sort-dropdown summary {
+  list-style: none !important;
+  cursor: pointer !important;
+}
+
+details.pf-sort-dropdown summary::-webkit-details-marker,
+details.pf-sort-dropdown summary::marker {
+  display: none !important;
+}
+
+/* Visually hide the native select while keeping it programmatically accessible & submittable */
+.pf-sr-only-select {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Trigger Button / Summary */
+.pf-sort-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-width: 190px !important;
+  height: 38px !important;
+  padding: 0 12px 0 14px !important;
+  background-color: var(--pf-bg-surface) !important;
+  color: var(--pf-heading-color) !important;
+  border: 1px solid var(--pf-border) !important;
+  border-radius: var(--pf-radius-sm) !important;
+  font-family: var(--pf-font-body) !important;
+  font-size: 1.35rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  box-shadow: var(--pf-shadow-subtle) !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.pf-sort-trigger:hover {
+  background-color: var(--pf-bg-surface-elevated) !important;
+  border-color: var(--pf-border-strong) !important;
+  color: var(--pf-heading-color) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.pf-sort-trigger:active {
+  transform: translateY(1px) scale(0.985);
+  transition-duration: 0.08s;
+}
+
+.pf-sort-trigger:focus-visible {
+  outline: 2px solid var(--pf-accent) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--pf-accent-subtle) !important;
+}
+
+details.pf-sort-dropdown[open] .pf-sort-trigger,
+.pf-sort-dropdown.is-open .pf-sort-trigger {
+  border-color: var(--pf-accent) !important;
+  box-shadow: 0 0 0 3px var(--pf-accent-subtle) !important;
+  background-color: var(--pf-bg-surface-elevated) !important;
+}
+
+.pf-sort-trigger-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  letter-spacing: -0.01em;
+}
+
+.pf-sort-trigger-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pf-text-secondary);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), color 0.16s ease;
+  flex-shrink: 0;
+}
+
+details.pf-sort-dropdown[open] .pf-sort-trigger-icon,
+.pf-sort-dropdown.is-open .pf-sort-trigger-icon {
+  transform: rotate(180deg) !important;
+  color: var(--pf-accent) !important;
+}
+
+/* Popover Menu */
+.pf-sort-popover {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  right: 0 !important;
+  min-width: 230px !important;
+  width: max-content !important;
+  max-width: 320px !important;
+  background-color: var(--pf-bg-surface) !important;
+  border: 1px solid var(--pf-border-strong) !important;
+  border-radius: var(--pf-radius-md) !important;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--pf-border) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  padding: 6px !important;
+  z-index: 9999 !important;
+  opacity: 0;
+  visibility: hidden;
+  display: none;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+details.pf-sort-dropdown[open] .pf-sort-popover,
+.pf-sort-dropdown.is-open .pf-sort-popover {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
+}
+
+/* Popover Header Note */
+.pf-sort-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 8px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--pf-border-subtle);
+  font-family: var(--pf-font-mono);
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pf-text-tertiary);
+}
+
+.pf-sort-popover-title {
+  font-weight: 600;
+}
+
+.pf-sort-popover-count {
+  font-size: 0.95rem;
+  color: var(--pf-text-tertiary);
+}
+
+/* Option List */
+.pf-sort-popover-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.pf-sort-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--pf-radius-sm);
+  color: var(--pf-text-secondary);
+  font-family: var(--pf-font-body);
+  font-size: 1.3rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  outline: none;
+}
+
+.pf-sort-option:hover,
+.pf-sort-option.is-focused,
+.pf-sort-option:focus-visible {
+  background-color: var(--pf-bg-surface-subtle);
+  color: var(--pf-heading-color);
+  padding-left: 13px;
+}
+
+.pf-sort-option.is-selected {
+  background-color: var(--pf-accent-subtle);
+  color: var(--pf-accent);
+  font-weight: 600;
+}
+
+.pf-sort-option-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.pf-sort-option-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--pf-accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pf-sort-option.is-selected .pf-sort-option-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Fallback Sort & Filter Select */
 .select__select,
 .facet-filters__sort {
   background-color: var(--pf-bg-surface) !important;
   color: var(--pf-heading-color) !important;
   border: 1px solid var(--pf-border) !important;
   border-radius: var(--pf-radius-sm) !important;
-  font-family: var(--pf-font-mono) !important;
-  font-size: 1.25rem !important;
+  font-family: var(--pf-font-body) !important;
+  font-size: 1.35rem !important;
 }
 
 .select__select option,
 select option {
   background-color: var(--pf-bg-surface) !important;
   color: var(--pf-heading-color) !important;
+}
+
+/* Explicit Dark Mode Overrides for Custom Sort Dropdown */
+[data-theme="dark"] .pf-sort-trigger {
+  background-color: #1d1e19 !important;
+  color: #f1efe7 !important;
+  border-color: rgba(241, 239, 231, 0.14) !important;
+}
+
+[data-theme="dark"] .pf-sort-trigger:hover {
+  background-color: #242620 !important;
+  border-color: rgba(241, 239, 231, 0.25) !important;
+}
+
+[data-theme="dark"] details.pf-sort-dropdown[open] .pf-sort-trigger,
+[data-theme="dark"] .pf-sort-dropdown.is-open .pf-sort-trigger {
+  border-color: #ff5a1f !important;
+  box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.2) !important;
+}
+
+[data-theme="dark"] .pf-sort-popover {
+  background-color: #1d1e19 !important;
+  border-color: rgba(241, 239, 231, 0.18) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .pf-sort-option {
+  color: #a4a49a !important;
+}
+
+[data-theme="dark"] .pf-sort-option:hover,
+[data-theme="dark"] .pf-sort-option.is-focused {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .pf-sort-option.is-selected {
+  background-color: rgba(255, 90, 31, 0.14) !important;
+  color: #ff5a1f !important;
 }
 
 [data-theme="dark"] .card__heading,
@@ -1770,6 +2217,35 @@ select option {
 [data-theme="dark"] .price__sale,
 [data-theme="dark"] .price-item {
   color: #ffffff !important;
+}
+
+/* Explicit Dark Mode Overrides for Studio List View */
+[data-theme="dark"] .pf-product-grid.is-list-view .pf-card {
+  background-color: #161713 !important;
+  border-color: rgba(241, 239, 231, 0.12) !important;
+}
+
+[data-theme="dark"] .pf-product-grid.is-list-view .pf-card:hover {
+  border-color: rgba(255, 90, 31, 0.45) !important;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 90, 31, 0.25) !important;
+}
+
+[data-theme="dark"] .pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-quickview {
+  background-color: #20221c !important;
+  border-color: rgba(241, 239, 231, 0.18) !important;
+  color: #f1efe7 !important;
+}
+
+[data-theme="dark"] .pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-quickview:hover {
+  background-color: #ff5a1f !important;
+  border-color: #ff5a1f !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .pf-product-grid.is-list-view .pf-card-list-actions .pf-card-btn-favorite {
+  background-color: #20221c !important;
+  border-color: rgba(241, 239, 231, 0.18) !important;
+  color: #a4a49a !important;
 }
 
 /* ==========================================================================
@@ -2120,3 +2596,250 @@ select option {
   background: var(--pf-forge-orange, #FF5A1F);
   color: #ffffff;
 }
+
+/* ==========================================================================
+   PDP 3D & MEDIA SUITE (THEME RESPONSIVE: LIGHT & DARK)
+   ========================================================================== */
+
+.pf-pdp-media-suite {
+  margin-bottom: 24px;
+}
+
+.pf-pdp-viewport-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+[data-theme="dark"] .pf-pdp-viewport-card {
+  background: radial-gradient(circle at 50% 50%, #1a1b24 0%, #0c0d12 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .pf-pdp-viewport-card {
+  background: var(--pf-viewport-bg);
+  border: 1px solid var(--pf-border);
+  box-shadow: var(--pf-shadow-card);
+}
+
+.pf-pdp-viewport-card .pf-viewer-container {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+#pf-pdp-photo-viewport {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: background-color 0.25s ease;
+}
+
+[data-theme="dark"] #pf-pdp-photo-viewport {
+  background: #08090c;
+}
+
+[data-theme="light"] #pf-pdp-photo-viewport {
+  background: var(--pf-viewport-bg);
+}
+
+.pf-pdp-render-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-family: var(--pf-font-mono);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .pf-pdp-render-badge {
+  background: rgba(14, 15, 22, 0.88);
+  border: 1px solid rgba(255, 90, 31, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .pf-pdp-render-badge {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 90, 31, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pf-pdp-render-badge-text {
+  color: #ff5a1f;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pf-pdp-zoom-hint {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  z-index: 10;
+  font-size: 0.72rem;
+  backdrop-filter: blur(6px);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--pf-font-mono);
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .pf-pdp-zoom-hint {
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .pf-pdp-zoom-hint {
+  color: var(--pf-text-secondary);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--pf-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.pf-media-thumbs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.pf-media-thumbs-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+}
+
+[data-theme="dark"] .pf-media-thumbs-title {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .pf-media-thumbs-title {
+  color: var(--pf-text-secondary);
+}
+
+.pf-media-thumbs-hint {
+  font-size: 0.7rem;
+  transition: color 0.2s ease;
+}
+
+[data-theme="dark"] .pf-media-thumbs-hint {
+  color: #64748b;
+}
+
+[data-theme="light"] .pf-media-thumbs-hint {
+  color: var(--pf-text-tertiary);
+}
+
+.pf-media-thumbs-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 8px 2px;
+  scrollbar-width: thin;
+}
+
+.pf-thumb-btn {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  min-width: 78px;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 3px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .pf-thumb-btn {
+  background: #14151e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+}
+
+[data-theme="light"] .pf-thumb-btn {
+  background: #ffffff;
+  border: 1px solid var(--pf-border);
+  box-shadow: 0 1px 4px rgba(20, 21, 18, 0.05);
+}
+
+.pf-thumb-btn:hover {
+  border-color: var(--pf-accent) !important;
+  transform: translateY(-1px);
+}
+
+.pf-thumb-btn.is-active {
+  border: 2px solid var(--pf-accent) !important;
+  box-shadow: 0 0 12px rgba(255, 90, 31, 0.4) !important;
+}
+
+.pf-thumb-orbit-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+}
+
+.pf-thumb-orbit-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: color 0.2s ease;
+}
+
+[data-theme="dark"] .pf-thumb-orbit-title {
+  color: #ffffff;
+}
+
+[data-theme="light"] .pf-thumb-orbit-title {
+  color: var(--pf-text-primary);
+}
+
+.pf-thumb-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 0.58rem;
+  font-weight: 600;
+  padding: 3px 2px 2px 2px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+[data-theme="dark"] .pf-thumb-caption {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 70%, transparent 100%);
+  color: #ffffff;
+}
+
+[data-theme="light"] .pf-thumb-caption {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.75) 70%, transparent 100%);
+  color: var(--pf-text-primary);
+}
+

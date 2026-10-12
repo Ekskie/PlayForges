@@ -157,18 +157,22 @@
     <div class="pf-card-media" data-pf-card-media>
       <!-- Static Poster Image -->
       {%- if card_product.featured_media -%}
-        <img
-          src="{{ poster_img_url }}"
-          alt="{{ card_product.featured_media.alt | default: card_product.title | escape }}"
-          loading="lazy"
-          class="pf-card-poster"
-          width="500"
-          height="375"
-        >
+        <a href="{{ card_product.url }}" class="pf-card-poster-link" aria-label="{{ card_product.title | escape }}" tabindex="-1">
+          <img
+            src="{{ poster_img_url }}"
+            alt="{{ card_product.featured_media.alt | default: card_product.title | escape }}"
+            loading="lazy"
+            class="pf-card-poster"
+            width="500"
+            height="375"
+          >
+        </a>
       {%- else -%}
-        <div class="pf-card-poster" style="display: flex; align-items: center; justify-content: center; background: var(--pf-bg-surface-subtle); color: var(--pf-text-secondary); width: 100%; height: 100%;">
-          {{ 'image' | placeholder_svg_tag }}
-        </div>
+        <a href="{{ card_product.url }}" class="pf-card-poster-link" aria-label="{{ card_product.title | escape }}" tabindex="-1">
+          <div class="pf-card-poster" style="display: flex; align-items: center; justify-content: center; background: var(--pf-bg-surface-subtle); color: var(--pf-text-secondary); width: 100%; height: 100%;">
+            {{ 'image' | placeholder_svg_tag }}
+          </div>
+        </a>
       {%- endif -%}
 
       <!-- 3D Preview Container (Mounts dynamically on hover/tap) -->
@@ -262,6 +266,44 @@
           {%- endif -%}
         </div>
       {%- endif -%}
+    </div>
+
+    <!-- Dedicated Right Column for Studio List View -->
+    <div class="pf-card-list-aside">
+      <div class="pf-card-list-price{% if card_product.price == 0 %} is-free{% endif %}">
+        {%- if card_product.price == 0 -%}
+          FREE
+        {%- else -%}
+          {{ card_product.price | money }}
+        {%- endif -%}
+      </div>
+      <div class="pf-card-list-actions">
+        {%- if show_quick_view != false -%}
+          <button
+            type="button"
+            class="pf-card-btn-quickview"
+            data-pf-quickview-btn
+            aria-label="Quick View {{ card_product.title | escape }}"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Quick Inspect</span>
+          </button>
+        {%- endif -%}
+        <button
+          type="button"
+          class="pf-card-btn-favorite"
+          data-pf-fav-btn="{{ card_product.id }}"
+          title="Save to Wishlist"
+          aria-label="Save to Wishlist"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 {%- else -%}

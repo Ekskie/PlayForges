@@ -1,0 +1,94 @@
+{% comment %}
+  PlayForge Custom Sort Dropdown
+  Replaces browser-native OS select with an accessible, keyboard-operable,
+  editorial popover listbox styled in PlayForge design tokens.
+
+  Accepts:
+  - results: {Object} collection or search object containing .sort_options and .sort_by
+  - input_id: {String} (optional, default: 'SortBy')
+{% endcomment %}
+
+{%- liquid
+  assign sort_by = results.sort_by | default: results.default_sort_by
+  assign current_option_name = ''
+  for option in results.sort_options
+    if option.value == sort_by
+      assign current_option_name = option.name
+      break
+    endif
+  endfor
+  if current_option_name == blank
+    assign current_option_name = results.sort_options.first.name
+  endif
+  assign dom_id = input_id | default: 'SortBy'
+-%}
+
+<details class="pf-sort-dropdown" data-pf-sort-dropdown>
+  {% comment %} Editorial trigger summary (Native HTML5 click toggle guarantees 100% reliable opening) {% endcomment %}
+  <summary
+    class="pf-sort-trigger"
+    aria-haspopup="listbox"
+    aria-label="{{ 'products.facets.sort_by_label' | t }}: {{ current_option_name | escape }}"
+    data-pf-sort-trigger
+  >
+    <span class="pf-sort-trigger-text" data-pf-sort-label>{{ current_option_name | escape }}</span>
+    <span class="pf-sort-trigger-icon" aria-hidden="true">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+  </summary>
+
+  {% comment %} Popover listbox menu {% endcomment %}
+  <div class="pf-sort-popover" role="listbox" tabindex="-1" data-pf-sort-menu aria-label="{{ 'products.facets.sort_by_label' | t }}">
+    <div class="pf-sort-popover-header">
+      <span class="pf-sort-popover-title">Sort by</span>
+      <span class="pf-sort-popover-count">{{ results.sort_options.size }} options</span>
+    </div>
+    <div class="pf-sort-popover-options">
+      {%- for option in results.sort_options -%}
+        {%- assign is_selected = false -%}
+        {%- if option.value == sort_by -%}
+          {%- assign is_selected = true -%}
+        {%- endif -%}
+        <button
+          type="button"
+          role="option"
+          class="pf-sort-option{% if is_selected %} is-selected{% endif %}"
+          data-value="{{ option.value | escape }}"
+          data-label="{{ option.name | escape }}"
+          aria-selected="{% if is_selected %}true{% else %}false{% endif %}"
+          tabindex="0"
+        >
+          <span class="pf-sort-option-label">{{ option.name | escape }}</span>
+          <span class="pf-sort-option-check" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+      {%- endfor -%}
+    </div>
+  </div>
+
+  {% comment %} Hidden real select for seamless Shopify FacetFiltersForm AJAX serialization {% endcomment %}
+  <select
+    name="sort_by"
+    class="facet-filters__sort select__select caption-large pf-sr-only-select"
+    id="{{ dom_id }}"
+    aria-describedby="a11y-refresh-page-message"
+    tabindex="-1"
+    aria-hidden="true"
+  >
+    {%- for option in results.sort_options -%}
+      <option
+        value="{{ option.value | escape }}"
+        {% if option.value == sort_by %}
+          selected="selected"
+        {% endif %}
+      >
+        {{ option.name | escape }}
+      </option>
+    {%- endfor -%}
+  </select>
+</details>

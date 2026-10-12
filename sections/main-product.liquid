@@ -113,9 +113,9 @@
       {%- if pdp_model != blank -%}
         {%- assign pdp_poster_url = product.featured_media | image_url: width: 1200 -%}
         
-        <div class="pf-pdp-media-suite" style="margin-bottom: 24px;">
+        <div class="pf-pdp-media-suite">
           <!-- Primary Viewport Card -->
-          <div class="pf-pdp-viewport-card" style="position: relative; border-radius: 12px; overflow: hidden; background: radial-gradient(circle at 50% 50%, #1a1b24 0%, #0c0d12 100%); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);">
+          <div class="pf-pdp-viewport-card">
             
             <!-- 1. 3D WebGL Turntable Viewport -->
             <div id="pf-pdp-3d-viewport" style="display: block; width: 100%;">
@@ -132,38 +132,38 @@
             </div>
 
             <!-- 2. High-Res Photo Viewport (Render Looks) -->
-            <div id="pf-pdp-photo-viewport" style="display: none; width: 100%; aspect-ratio: 4 / 3; position: relative; background: #08090c; align-items: center; justify-content: center; overflow: hidden;">
+            <div id="pf-pdp-photo-viewport" style="display: none;">
               <img
                 id="pf-pdp-active-render-img"
-                src=""
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
                 alt="Render Look"
                 style="width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.25s ease;"
                 onclick="this.style.transform = (this.style.transform === 'scale(1.6)' ? 'scale(1)' : 'scale(1.6)');"
               />
               
-              <div class="pf-viewer-badge" style="position: absolute; top: 14px; left: 14px; z-index: 10; background: rgba(14, 15, 22, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(255, 90, 31, 0.5); padding: 5px 12px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                <span id="pf-pdp-render-badge-text" style="color: #FF5A1F; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">STUDIO RENDER LOOK</span>
+              <div class="pf-pdp-render-badge">
+                <span id="pf-pdp-render-badge-text" class="pf-pdp-render-badge-text">STUDIO RENDER LOOK</span>
               </div>
 
-              <div style="position: absolute; bottom: 12px; right: 14px; z-index: 10; font-size: 0.72rem; color: #94a3b8; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">
+              <div class="pf-pdp-zoom-hint">
                 Click photo to toggle 1.6x inspection zoom
               </div>
             </div>
           </div>
 
           <!-- Media Thumbnails Switcher Strip -->
-          <div class="pf-media-thumbs-container" style="margin-top: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+          <div class="pf-media-thumbs-container">
+            <div class="pf-media-thumbs-header">
+              <span class="pf-media-thumbs-title">
                 <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #FF5A1F;"></span>
                 Media Gallery &bull; Interactive 3D &amp; Render Looks
               </span>
-              <span style="font-size: 0.7rem; color: #64748b;">
+              <span class="pf-media-thumbs-hint">
                 Click any thumbnail to inspect
               </span>
             </div>
 
-            <div class="pf-media-thumbs-strip" style="display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px 2px; scrollbar-width: thin;">
+            <div class="pf-media-thumbs-strip">
               <!-- 3D Model Thumbnail -->
               <button
                 type="button"
@@ -171,17 +171,18 @@
                 class="pf-thumb-btn is-active"
                 onclick="window.switchPdpMediaView('3d')"
                 title="Inspect 3D WebGL Model"
-                style="position: relative; width: 78px; height: 78px; min-width: 78px; border-radius: 8px; background: #14151e; border: 2px solid #FF5A1F; cursor: pointer; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 0 12px rgba(255, 90, 31, 0.4); transition: all 0.2s ease;"
               >
-                <div style="background: rgba(255, 90, 31, 0.15); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FF5A1F;">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                  </svg>
+                <div class="pf-thumb-orbit-inner">
+                  <div style="background: rgba(255, 90, 31, 0.15); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FF5A1F;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                  </div>
+                  <span class="pf-thumb-orbit-title">3D Orbit</span>
+                  <span style="position: absolute; top: 4px; right: 4px; background: #FF5A1F; color: #fff; font-size: 0.55rem; font-weight: 800; padding: 1px 4px; border-radius: 3px;">3D</span>
                 </div>
-                <span style="font-size: 0.65rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.04em;">3D Orbit</span>
-                <span style="position: absolute; top: 4px; right: 4px; background: #FF5A1F; color: #fff; font-size: 0.55rem; font-weight: 800; padding: 1px 4px; border-radius: 3px;">3D</span>
               </button>
 
               <!-- Product Images / Render Looks -->
@@ -193,7 +194,6 @@
                   class="pf-thumb-btn"
                   onclick="window.switchPdpMediaView('photo', '{{ image | image_url: width: 1400 }}', '{{ img_alt | escape }}', this)"
                   title="{{ img_alt | escape }}"
-                  style="position: relative; width: 78px; height: 78px; min-width: 78px; border-radius: 8px; background: #14151e; border: 1px solid rgba(255, 255, 255, 0.15); cursor: pointer; padding: 3px; overflow: hidden; transition: all 0.2s ease;"
                 >
                   <img
                     src="{{ image | image_url: width: 160, height: 160, crop: 'center' }}"
@@ -201,7 +201,7 @@
                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"
                     loading="lazy"
                   />
-                  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 70%, transparent 100%); font-size: 0.58rem; color: #fff; font-weight: 600; padding: 3px 2px 2px 2px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  <div class="pf-thumb-caption">
                     {{ img_alt | truncate: 12 }}
                   </div>
                 </button>
@@ -219,19 +219,13 @@
 
               allButtons.forEach(function(b) {
                 b.classList.remove('is-active');
-                b.style.border = '1px solid rgba(255, 255, 255, 0.15)';
-                b.style.boxShadow = 'none';
               });
 
               if (type === '3d') {
                 if (viewPhoto) viewPhoto.style.display = 'none';
                 if (view3d) view3d.style.display = 'block';
                 var btn3d = document.getElementById('pf-thumb-btn-3d');
-                if (btn3d) {
-                  btn3d.classList.add('is-active');
-                  btn3d.style.border = '2px solid #FF5A1F';
-                  btn3d.style.boxShadow = '0 0 12px rgba(255, 90, 31, 0.4)';
-                }
+                if (btn3d) btn3d.classList.add('is-active');
               } else {
                 if (view3d) view3d.style.display = 'none';
                 if (viewPhoto) {
@@ -246,11 +240,7 @@
                   }
                 }
                 var targetBtn = btnElement || document.getElementById('pf-thumb-btn-img-1');
-                if (targetBtn) {
-                  targetBtn.classList.add('is-active');
-                  targetBtn.style.border = '2px solid #FF5A1F';
-                  targetBtn.style.boxShadow = '0 0 12px rgba(255, 90, 31, 0.4)';
-                }
+                if (targetBtn) targetBtn.classList.add('is-active');
               }
             };
           </script>

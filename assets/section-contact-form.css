@@ -309,8 +309,8 @@ a.pf-channel-val:hover {
 .pf-input:focus,
 .pf-textarea:focus {
   outline: none;
-  border-color: var(--pf-accent, #ff5a1f) !important;
-  box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.18) !important;
+  border-color: var(--pf-accent) !important;
+  box-shadow: 0 0 0 3px var(--pf-accent-subtle) !important;
   background: var(--pf-bg-surface) !important;
 }
 
@@ -319,7 +319,7 @@ a.pf-channel-val:hover {
   min-height: 120px;
 }
 
-/* Submit Button */
+/* Submit Button with tactile micro-interactions */
 .pf-contact-submit-btn {
   display: flex;
   align-items: center;
@@ -327,23 +327,35 @@ a.pf-channel-val:hover {
   gap: 10px;
   width: 100%;
   padding: 14px 24px;
-  background: var(--pf-accent, #ff5a1f);
+  background: var(--pf-accent);
   color: #ffffff !important;
   font-family: var(--pf-font-heading);
-  font-size: 1.45rem;
-  font-weight: 700;
-  border-radius: var(--pf-radius-sm, 6px);
-  border: none;
+  font-size: 1.4rem;
+  font-weight: 600;
+  border-radius: var(--pf-radius-sm);
+  border: 1px solid var(--pf-accent);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 16px rgba(255, 90, 31, 0.35);
+  transition: var(--pf-transition);
+  box-shadow: 0 4px 16px var(--pf-accent-subtle);
   margin-top: 8px;
 }
 
 .pf-contact-submit-btn:hover {
-  background: var(--pf-accent-hover, #e04b14);
+  background: var(--pf-accent-hover);
+  border-color: var(--pf-accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 90, 31, 0.5);
+  box-shadow: 0 8px 24px var(--pf-accent-subtle);
+}
+
+.pf-contact-submit-btn:active {
+  transform: translateY(1px) scale(0.985);
+  transition-duration: 0.08s;
+}
+
+.pf-contact-submit-btn:focus-visible {
+  outline: 2px solid var(--pf-accent);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--pf-accent-subtle);
 }
 
 .pf-contact-submit-btn svg {
@@ -369,23 +381,23 @@ a.pf-channel-val:hover {
 /* Success & Error Status */
 .pf-form-alert {
   padding: 16px 20px;
-  border-radius: var(--pf-radius-sm, 6px);
+  border-radius: var(--pf-radius-sm);
   margin-bottom: 24px;
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   line-height: 1.5;
 }
 
 .pf-form-alert--success {
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
   color: #22c55e;
 }
 
 .pf-form-alert--error {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   color: #ef4444;
 }
