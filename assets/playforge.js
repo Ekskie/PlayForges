@@ -37,7 +37,7 @@
     safeInit('ModelViewerLoaders', initModelViewerLoaders);
     safeInit('Wishlist', initWishlist);
     safeInit('ViewSwitcher', initViewSwitcher);
-    safeInit('CartRecommendations', initCartRecommendations);
+    safeInit('CartBundleCompleter', initCartBundleCompleter);
     safeInit('CustomSortDropdown', initCustomSortDropdown);
     safeInit('AjaxGridObserver', initAjaxGridObserver);
   }
@@ -621,83 +621,141 @@
 
 
   /* ==========================================================================
-     6. CART DRAWER "COMPLETE YOUR ENVIRONMENT" RECOMMENDATIONS
+     6. CART DRAWER SPACE-EFFICIENT BUNDLE COMPLETION
+     - Dynamically adds single or all companion items in the collection bundle
+     - Dispatches section rendering API to update cart drawer & badge without reloading
+     - Adds line item properties for bundle savings identification
      ========================================================================== */
-  function initCartRecommendations() {
-    const drawer = document.getElementById('CartDrawer');
-    if (!drawer) return;
+  function initCartBundleCompleter() {
+    // Document-level event delegation so clicks survive AJAX re-renders
+    document.addEventListener('click', function(e) {
+      // 1. Single Item Add to Bundle
+      const addBtn = e.target.closest('[data-pf-bundle-add]');
+      if (addBtn) {
+        e.preventDefault();
+        const variantId = addBtn.getAttribute('data-variant-id');
+        const bundleName = addBtn.getAttribute('data-bundle-name') || 'Asset Kit';
+        if (!variantId) return;
 
-    // Check if recommendations block exists or inject it dynamically
-    const renderRecommendations = (productId) => {
-      let recContainer = drawer.querySelector('.pf-cart-cross-sell');
-      if (!recContainer) {
-        recContainer = document.createElement('div');
-        recContainer.className = 'pf-cart-cross-sell';
-        const inner = drawer.querySelector('.drawer__inner');
-        if (inner) inner.appendChild(recContainer);
+        addBtn.disabled = true;
+        const origContent = addBtn.innerHTML;
+        addBtn.innerHTML = '...';
+
+        fetch('/cart/add.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            items: [
+              {
+                id: Number(variantId),
+                quantity: 1,
+                properties: {
+                  'Bundle Pack': bundleName,
+                  'Bundle Savings': '20% OFF Complete Kit'
+                }
+              }
+            ],
+            sections: ['cart-drawer', 'cart-icon-bubble']
+          })
+        })
+        .then((res) => {
+          if (!res.ok) throw new Error('Add failed');
+          return res.json();
+        })
+        .then((data) => {
+          addBtn.innerHTML = '✓ Added';
+          const drawer = document.querySelector('cart-drawer');
+          if (drawer && data.sections && typeof drawer.renderContents === 'function') {
+            drawer.renderContents(data);
+          } else {
+            location.reload();
+          }
+        })
+        .catch((err) => {
+          console.error('Bundle item add error:', err);
+          addBtn.innerHTML = '!';
+          setTimeout(() => {
+            addBtn.disabled = false;
+            addBtn.innerHTML = origContent;
+          }, 1500);
+        });
+        return;
       }
 
-      fetch(`/recommendations/products.json?product_id=${productId}&limit=3`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (!data.products || !data.products.length) return;
+      // 2. Add All Remaining to Complete Bundle
+      const addAllBtn = e.target.closest('[data-pf-bundle-add-all]');
+      if (addAllBtn) {
+        e.preventDefault();
+        const bundleDock = addAllBtn.closest('.pf-bundle-dock');
+        if (!bundleDock) return;
+        const itemBtns = bundleDock.querySelectorAll('[data-pf-bundle-add]');
+        if (!itemBtns.length) return;
 
-          let html = `
-            <div class="pf-cross-sell-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-              Complete Your Environment
-            </div>
-          `;
+        addAllBtn.disabled = true;
+        const origAllContent = addAllBtn.innerHTML;
+        addAllBtn.innerHTML = '<span>Packaging All Assets...</span>';
 
-          data.products.forEach((prod) => {
-            const price = (prod.price / 100).toFixed(2);
-            html += `
-              <div class="pf-cross-sell-item">
-                <img src="${prod.featured_image || ''}" class="pf-cross-sell-thumb" alt="${prod.title}">
-                <div class="pf-cross-sell-details">
-                  <div class="pf-cross-sell-name">${prod.title}</div>
-                  <div class="pf-cross-sell-price">₱${price}</div>
-                </div>
-                <button type="button" class="pf-cross-sell-add" data-quick-add-id="${prod.variants[0]?.id}">
-                  + Add
-                </button>
-              </div>
-            `;
-          });
+        const bundleName = addAllBtn.getAttribute('data-bundle-name') || 'Asset Kit';
+        const itemsToAdd = [];
 
-          recContainer.innerHTML = html;
-
-          // Wire Add buttons
-          recContainer.querySelectorAll('[data-quick-add-id]').forEach((b) => {
-            b.addEventListener('click', () => {
-              const varId = b.dataset.quickAddId;
-              b.textContent = '...';
-              fetch('/cart/add.js', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: varId, quantity: 1 }),
-              }).then(() => {
-                b.textContent = 'Added';
-                // Trigger cart drawer refresh
-                if (typeof drawer.closest('cart-drawer')?.renderContents === 'function') {
-                  drawer.closest('cart-drawer').renderContents();
-                } else {
-                  location.reload();
-                }
-              });
+        itemBtns.forEach((btn) => {
+          const vId = btn.getAttribute('data-variant-id');
+          if (vId) {
+            itemsToAdd.push({
+              id: Number(vId),
+              quantity: 1,
+              properties: {
+                'Bundle Pack': bundleName,
+                'Bundle Savings': '20% OFF Complete Kit'
+              }
             });
-          });
-        })
-        .catch(() => {});
-    };
+          }
+        });
 
-    // Listen to Cart updates
-    const firstItem = drawer.querySelector('[data-product-id]');
-    if (firstItem && firstItem.dataset.productId) {
-      renderRecommendations(firstItem.dataset.productId);
-    }
+        if (!itemsToAdd.length) {
+          addAllBtn.disabled = false;
+          addAllBtn.innerHTML = origAllContent;
+          return;
+        }
+
+        fetch('/cart/add.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            items: itemsToAdd,
+            sections: ['cart-drawer', 'cart-icon-bubble']
+          })
+        })
+        .then((res) => {
+          if (!res.ok) throw new Error('Batch add failed');
+          return res.json();
+        })
+        .then((data) => {
+          addAllBtn.innerHTML = '✓ Complete Kit Added to Cart!';
+          const drawer = document.querySelector('cart-drawer');
+          if (drawer && data.sections && typeof drawer.renderContents === 'function') {
+            drawer.renderContents(data);
+          } else {
+            location.reload();
+          }
+        })
+        .catch((err) => {
+          console.error('Batch bundle add error:', err);
+          addAllBtn.innerHTML = 'Failed to Add';
+          setTimeout(() => {
+            addAllBtn.disabled = false;
+            addAllBtn.innerHTML = origAllContent;
+          }, 2000);
+        });
+        return;
+      }
+    });
   }
 
   /* ==========================================================================

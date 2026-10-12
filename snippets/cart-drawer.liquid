@@ -48,11 +48,13 @@
               {%- endif -%}
             </div>
           </div>
-          {%- if settings.cart_drawer_collection != blank -%}
-            <div class="cart-drawer__collection">
-              {% render 'card-collection', card_collection: settings.cart_drawer_collection, columns: 1 %}
+          <div class="pf-cart-empty-disciplines">
+            <span class="pf-cart-empty-disciplines__title">Or explore asset disciplines:</span>
+            <div class="pf-cart-empty-pills">
+              <a href="{{ routes.all_products_collection_url }}" class="pf-empty-pill">All Assets</a>
+              <a href="{{ routes.collections_url }}" class="pf-empty-pill">Collections &rarr;</a>
             </div>
-          {%- endif -%}
+          </div>
         </div>
       {%- endif -%}
       <div class="drawer__header">
@@ -359,47 +361,136 @@
       </cart-drawer-items>
 
       {%- if cart != empty -%}
-        <!-- PlayForge Complete Your Environment Recommendations -->
-        <div class="pf-cart-cross-sell" style="margin: 16px 20px;">
-          <div class="pf-cross-sell-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            Complete Your Environment
-          </div>
-          {%- assign rec_collection = collections[settings.cart_drawer_collection] | default: collections.all -%}
-          {%- if rec_collection.products.size > 0 -%}
-            {%- assign shown_rec = 0 -%}
-            {%- for rec_prod in rec_collection.products -%}
-              {%- assign in_cart = false -%}
-              {%- for item in cart.items -%}
-                {%- if item.product_id == rec_prod.id -%}
-                  {%- assign in_cart = true -%}
-                {%- endif -%}
-              {%- endfor -%}
-              {%- unless in_cart -%}
-                {%- if shown_rec < 3 -%}
-                  <div class="pf-cross-sell-item">
-                    <img src="{{ rec_prod.featured_media | image_url: width: 100 }}" class="pf-cross-sell-thumb" alt="{{ rec_prod.title | escape }}" width="64" height="64" loading="lazy">
-                    <div class="pf-cross-sell-details">
-                      <div class="pf-cross-sell-name">{{ rec_prod.title | escape }}</div>
-                      <div class="pf-cross-sell-price">{{ rec_prod.price | money }}</div>
-                    </div>
-                    <product-form>
-                      {%- form 'product', rec_prod -%}
-                        <input type="hidden" name="id" value="{{ rec_prod.selected_or_first_available_variant.id }}">
-                        <button type="submit" name="add" class="pf-cross-sell-add">
-                          + Add
-                        </button>
-                      {%- endform -%}
-                    </product-form>
+        {%- liquid
+          assign matched_bundle_collection = nil
+          assign unpurchased_count = 0
+
+          for item in cart.items
+            for col in item.product.collections
+              if col.handle == 'all' or col.handle == 'frontpage'
+                continue
+              endif
+
+              assign temp_unpurchased_count = 0
+              for prod in col.products
+                assign in_cart = false
+                for c_item in cart.items
+                  if c_item.product_id == prod.id
+                    assign in_cart = true
+                    break
+                  endif
+                endfor
+                unless in_cart
+                  assign temp_unpurchased_count = temp_unpurchased_count | plus: 1
+                endunless
+              endfor
+
+              if temp_unpurchased_count > 0
+                assign matched_bundle_collection = col
+                assign unpurchased_count = temp_unpurchased_count
+                break
+              endif
+            endfor
+
+            if matched_bundle_collection != nil
+              break
+            endif
+          endfor
+        -%}
+
+        {%- if matched_bundle_collection != nil and unpurchased_count > 0 -%}
+          <!-- PlayForge Space-Efficient Kit Bundle Completion Dock -->
+          <div class="pf-bundle-dock" data-bundle-collection="{{ matched_bundle_collection.handle }}">
+            <details class="pf-bundle-dock__details" open>
+              <summary class="pf-bundle-dock__summary">
+                <div class="pf-bundle-dock__header-top">
+                  <div class="pf-bundle-dock__header-left">
+                    <span class="pf-bundle-dock__icon" aria-hidden="true">★</span>
+                    <span class="pf-bundle-dock__kicker">COMPLETE THE KIT</span>
                   </div>
-                  {%- assign shown_rec = shown_rec | plus: 1 -%}
+                  <div class="pf-bundle-dock__header-right">
+                    <span class="pf-bundle-dock__save-badge">SAVE 20%</span>
+                    <svg class="pf-bundle-dock__chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <div class="pf-bundle-dock__header-bottom">
+                  <strong class="pf-bundle-dock__title">{{ matched_bundle_collection.title }}</strong>
+                  <span class="pf-bundle-dock__count">{{ unpurchased_count }} item{% if unpurchased_count > 1 %}s{% endif %} remaining</span>
+                </div>
+              </summary>
+
+              <div class="pf-bundle-dock__content">
+                <div class="pf-bundle-dock__items">
+                  {%- assign shown = 0 -%}
+                  {%- for prod in matched_bundle_collection.products -%}
+                    {%- assign already_in_cart = false -%}
+                    {%- for c_item in cart.items -%}
+                      {%- if c_item.product_id == prod.id -%}
+                        {%- assign already_in_cart = true -%}
+                        {%- break -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+
+                    {%- unless already_in_cart -%}
+                      {%- if shown < 2 -%}
+                        {%- liquid
+                          assign discount_price = prod.price | times: 80 | divided_by: 100
+                        -%}
+                        <div class="pf-bundle-row">
+                          <img
+                            src="{{ prod.featured_media | image_url: width: 96, height: 96, crop: 'center' }}"
+                            alt="{{ prod.title | escape }}"
+                            class="pf-bundle-row__thumb"
+                            width="38"
+                            height="38"
+                            loading="lazy"
+                          >
+                          <div class="pf-bundle-row__info">
+                            <span class="pf-bundle-row__name" title="{{ prod.title | escape }}">
+                              {{ prod.title }}
+                            </span>
+                            <div class="pf-bundle-row__prices">
+                              <span class="pf-bundle-row__final">{{ discount_price | money }}</span>
+                              <s class="pf-bundle-row__orig">{{ prod.price | money }}</s>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            class="pf-bundle-row__add"
+                            data-pf-bundle-add
+                            data-variant-id="{{ prod.selected_or_first_available_variant.id }}"
+                            data-bundle-name="{{ matched_bundle_collection.title | escape }}"
+                            aria-label="Add {{ prod.title | escape }} to bundle"
+                          >
+                            + Add
+                          </button>
+                        </div>
+                        {%- assign shown = shown | plus: 1 -%}
+                      {%- endif -%}
+                    {%- endunless -%}
+                  {%- endfor -%}
+                </div>
+
+                {%- if unpurchased_count > 1 -%}
+                  <button
+                    type="button"
+                    class="pf-bundle-dock__add-all"
+                    data-pf-bundle-add-all
+                    data-bundle-name="{{ matched_bundle_collection.title | escape }}"
+                  >
+                    <span>Complete Kit &amp; Save 20% on Remaining ({{ unpurchased_count }} items)</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
                 {%- endif -%}
-              {%- endunless -%}
-            {%- endfor -%}
-          {%- endif -%}
-        </div>
+              </div>
+            </details>
+          </div>
+        {%- endif -%}
       {%- endif -%}
 
       <div class="drawer__footer">

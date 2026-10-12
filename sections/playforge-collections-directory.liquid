@@ -1,0 +1,731 @@
+{% comment %}
+  PlayForge Collections Directory & Discipline Catalog
+  High-tech Bento Grid showcasing 3D asset disciplines, live asset counts,
+  technical engine compatibility badges, live search filter, and asset thumbnail strips.
+{% endcomment %}
+
+<div class="pf-collections-directory-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+  <div class="pf-container">
+    
+    <!-- Studio Command Header -->
+    <header class="pf-col-header">
+      <div class="pf-col-header__lead">
+        <div class="pf-col-header__kicker-wrap">
+          <span class="pf-section-kicker">{{ section.settings.kicker | default: 'CATALOG INDEX // 3D PIPELINE' }}</span>
+          <span class="pf-pulse-indicator" aria-hidden="true">
+            <span class="pf-pulse-dot"></span>
+            <span class="pf-pulse-text">STUDIO ACTIVE</span>
+          </span>
+        </div>
+        
+        <h1 class="pf-col-header__title">
+          {{ section.settings.title | default: 'Asset Collections & Disciplines' }}
+        </h1>
+        
+        <p class="pf-col-header__subheading">
+          {{ section.settings.subheading | default: 'Production-ready 3D components organized by environment, character, modular kits, and engine prefabs. Calibrated topology and PBR for seamless pipeline integration.' }}
+        </p>
+      </div>
+
+      {%- if section.settings.show_metrics -%}
+        <!-- Global Pipeline Metrics Strip -->
+        {%- liquid
+          assign computed_col_count = 0
+          assign computed_asset_count = 0
+          
+          if section.blocks.size > 0
+            for block in section.blocks
+              if block.settings.collection != blank
+                assign c = block.settings.collection
+                assign computed_col_count = computed_col_count | plus: 1
+                assign computed_asset_count = computed_asset_count | plus: c.all_products_count
+              endif
+            endfor
+          else
+            for c in collections
+              unless c.handle == 'frontpage'
+                assign computed_col_count = computed_col_count | plus: 1
+                assign computed_asset_count = computed_asset_count | plus: c.all_products_count
+              endunless
+            endfor
+          endif
+        -%}
+
+        <div class="pf-metrics-strip" aria-label="Catalog Overview Metrics">
+          <div class="pf-metric-item">
+            <span class="pf-metric-item__value">{{ computed_col_count | default: collections.size }}</span>
+            <span class="pf-metric-item__label">Disciplines &amp; Kits</span>
+          </div>
+          <div class="pf-metric-divider" aria-hidden="true"></div>
+          <div class="pf-metric-item">
+            <span class="pf-metric-item__value">{{ computed_asset_count | default: 50 }}+</span>
+            <span class="pf-metric-item__label">Production Assets</span>
+          </div>
+          <div class="pf-metric-divider" aria-hidden="true"></div>
+          <div class="pf-metric-item">
+            <span class="pf-metric-item__value">UE 5.4 · Unity</span>
+            <span class="pf-metric-item__label">Engine Standards</span>
+          </div>
+          <div class="pf-metric-divider" aria-hidden="true"></div>
+          <div class="pf-metric-item">
+            <span class="pf-metric-item__value">FBX · GLB · BLEND</span>
+            <span class="pf-metric-item__label">Export Formats</span>
+          </div>
+        </div>
+      {%- endif -%}
+
+      <!-- Command Filter Bar (Search + Quick Discipline Switcher) -->
+      {%- if section.settings.show_search -%}
+        <div class="pf-command-bar" role="search">
+          <div class="pf-search-input-wrap">
+            <svg class="pf-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="search"
+              id="pf-collections-search"
+              class="pf-search-input"
+              placeholder="Search collections by discipline, kit, or keyword (e.g. Environment, Weapon, Snowboard)..."
+              autocomplete="off"
+              aria-label="Filter collections"
+            >
+            <button type="button" id="pf-search-clear" class="pf-search-clear-btn" aria-label="Clear search query" style="display: none;">
+              &times;
+            </button>
+          </div>
+
+          <div class="pf-filter-pills" role="tablist" aria-label="Filter by asset category">
+            <button type="button" class="pf-filter-pill is-active" data-filter="all" role="tab" aria-selected="true">
+              All Disciplines
+            </button>
+            <button type="button" class="pf-filter-pill" data-filter="environment" role="tab" aria-selected="false">
+              Environments
+            </button>
+            <button type="button" class="pf-filter-pill" data-filter="props" role="tab" aria-selected="false">
+              Props &amp; Weapons
+            </button>
+            <button type="button" class="pf-filter-pill" data-filter="modular" role="tab" aria-selected="false">
+              Modular Kits
+            </button>
+            <button type="button" class="pf-filter-pill" data-filter="featured" role="tab" aria-selected="false">
+              Curated Packs
+            </button>
+          </div>
+        </div>
+      {%- endif -%}
+    </header>
+
+    <!-- Bento Grid Container -->
+    <div class="pf-bento-grid" id="pf-collections-bento-grid">
+      {%- liquid
+        assign has_blocks = false
+        if section.blocks.size > 0
+          assign has_blocks = true
+        endif
+        assign card_index = 0
+      -%}
+
+      {%- if has_blocks -%}
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign col = block.settings.collection
+            if col == blank
+              continue
+            endif
+            assign card_index = card_index | plus: 1
+            assign is_flagship = block.settings.is_flagship
+            if forloop.first and section.settings.force_first_flagship
+              assign is_flagship = true
+            endif
+
+            # Resolve image: custom block image -> collection featured image -> first product image
+            assign card_image = block.settings.custom_image | default: col.featured_image
+            if card_image == blank and col.products.first != blank
+              assign card_image = col.products.first.featured_image
+            endif
+
+            # Infer tags and discipline category for filtering
+            assign col_title_downcase = col.title | downcase
+            assign discipline_tag = 'general'
+            if col_title_downcase contains 'env' or col_title_downcase contains 'city' or col_title_downcase contains 'world' or col_title_downcase contains 'nature'
+              assign discipline_tag = 'environment'
+            elsif col_title_downcase contains 'prop' or col_title_downcase contains 'weapon' or col_title_downcase contains 'item' or col_title_downcase contains 'snowboard'
+              assign discipline_tag = 'props'
+            elsif col_title_downcase contains 'mod' or col_title_downcase contains 'kit' or col_title_downcase contains 'build'
+              assign discipline_tag = 'modular'
+            elsif col_title_downcase contains 'auto' or col_title_downcase contains 'feat' or col_title_downcase contains 'spotlight'
+              assign discipline_tag = 'featured'
+            endif
+          -%}
+
+          <div
+            class="pf-bento-card {% if is_flagship %}pf-bento-card--flagship{% endif %}"
+            data-title="{{ col.title | escape | downcase }}"
+            data-desc="{{ col.description | strip_html | escape | downcase }}"
+            data-handle="{{ col.handle }}"
+            data-discipline="{{ discipline_tag }}"
+            {{ block.shopify_attributes }}
+          >
+            <!-- 3D Viewport Presentation Surface -->
+            <a href="{{ col.url }}" class="pf-bento-card__viewport" tabindex="-1" aria-hidden="true">
+              <div class="pf-bento-card__viewport-grid"></div>
+
+              {%- if card_image != blank -%}
+                <img
+                  srcset="
+                    {{ card_image | image_url: width: 400 }} 400w,
+                    {{ card_image | image_url: width: 700 }} 700w,
+                    {{ card_image | image_url: width: 1100 }} 1100w
+                  "
+                  src="{{ card_image | image_url: width: 800 }}"
+                  alt="{{ col.title | escape }}"
+                  loading="lazy"
+                  class="pf-bento-card__img"
+                  sizes="(min-width: 1024px) {% if is_flagship %}65vw{% else %}33vw{% endif %}, 100vw"
+                  width="{{ card_image.width }}"
+                  height="{{ card_image.height }}"
+                >
+              {%- else -%}
+                <!-- Tactile Wireframe Geometric Placeholder -->
+                <div class="pf-bento-card__placeholder">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                  </svg>
+                  <span>3D ASSET DISCIPLINE</span>
+                </div>
+              {%- endif -%}
+
+              <!-- Tactical Viewport Badges -->
+              <div class="pf-bento-card__badges-top">
+                <span class="pf-tag-badge">
+                  {%- if block.settings.custom_kicker != blank -%}
+                    {{ block.settings.custom_kicker }}
+                  {%- else -%}
+                    DISCIPLINE // 0{{ card_index }}
+                  {%- endif -%}
+                </span>
+                {%- if is_flagship -%}
+                  <span class="pf-tag-badge is-accent">
+                    FLAGSHIP PACK
+                  </span>
+                {%- else -%}
+                  <span class="pf-tag-badge is-live">
+                    VERIFIED PBR
+                  </span>
+                {%- endif -%}
+              </div>
+
+              <div class="pf-bento-card__viewport-overlay"></div>
+            </a>
+
+            <!-- Tactical Information Panel -->
+            <div class="pf-bento-card__body">
+              <div class="pf-bento-card__header-row">
+                <div class="pf-bento-card__title-group">
+                  <span class="pf-bento-card__prefix">{{ block.settings.custom_kicker | default: 'PF-ASSET' }}</span>
+                  <h2 class="pf-bento-card__title">
+                    <a href="{{ col.url }}">{{ col.title }}</a>
+                  </h2>
+                </div>
+
+                <span class="pf-bento-card__count-pill" title="Total active items in this collection">
+                  {{ col.all_products_count | default: 0 }}
+                  {% if col.all_products_count == 1 %}Asset{% else %}Assets{% endif %}
+                </span>
+              </div>
+
+              {%- if col.description != blank or block.settings.custom_desc != blank -%}
+                <p class="pf-bento-card__desc">
+                  {{ block.settings.custom_desc | default: col.description | strip_html | truncate: 120 }}
+                </p>
+              {%- else -%}
+                <p class="pf-bento-card__desc">
+                  Production-ready asset kit with clean quad topology, PBR texture packing, and calibrated collision bounds.
+                </p>
+              {%- endif -%}
+
+              <!-- Technical Specification Chips -->
+              <div class="pf-bento-card__specs">
+                {%- assign tags_to_show = block.settings.engine_tags | default: 'UE5 Nanite · Unity URP · 4K PBR · FBX' | split: '·' -%}
+                {%- for tag in tags_to_show -%}
+                  <span class="pf-spec-chip">{{ tag | strip }}</span>
+                {%- endfor -%}
+              </div>
+
+              <!-- Interactive 3-Product Thumbnail Preview Strip -->
+              <div class="pf-bento-card__preview-section">
+                <div class="pf-bento-card__preview-label">
+                  <span>Included Assets Preview</span>
+                  <span class="pf-bento-card__preview-count">{{ col.products.size }} of {{ col.all_products_count }} inspected</span>
+                </div>
+
+                <div class="pf-bento-card__thumb-strip">
+                  {%- if col.products.size > 0 -%}
+                    {%- for prod in col.products limit: 3 -%}
+                      <a href="{{ prod.url }}" class="pf-bento-thumb" title="{{ prod.title | escape }}">
+                        {%- if prod.featured_image != blank -%}
+                          <img
+                            src="{{ prod.featured_image | image_url: width: 140, height: 140, crop: 'center' }}"
+                            alt="{{ prod.title | escape }}"
+                            loading="lazy"
+                            width="52"
+                            height="52"
+                          >
+                        {%- else -%}
+                          <div class="pf-bento-thumb__empty">3D</div>
+                        {%- endif -%}
+                        <span class="pf-bento-thumb__tooltip">{{ prod.title | truncate: 22 }}</span>
+                      </a>
+                    {%- endfor -%}
+                  {%- endif -%}
+
+                  {%- comment -%}Fill empty thumbnail slots with tactical placeholder tiles{%- endcomment -%}
+                  {%- assign rendered_thumbs = col.products.size -%}
+                  {%- if rendered_thumbs < 3 -%}
+                    {%- assign diff = 3 | minus: rendered_thumbs -%}
+                    {%- for i in (1..diff) -%}
+                      <div class="pf-bento-thumb is-ghost" title="Pending library asset">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      </div>
+                    {%- endfor -%}
+                  {%- endif -%}
+                </div>
+              </div>
+
+              <!-- Card Action Footer -->
+              <div class="pf-bento-card__footer">
+                <a href="{{ col.url }}" class="pf-bento-card__action-btn">
+                  <span>Explore Collection</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        {%- endfor -%}
+
+      {%- else -%}
+        {%- comment -%}Auto-populate dynamically from all store collections{%- endcomment -%}
+        {%- for col in collections -%}
+          {%- liquid
+            if col.handle == 'frontpage'
+              continue
+            endif
+
+            assign card_index = card_index | plus: 1
+            assign is_flagship = false
+            
+            if section.settings.flagship_collection != blank and section.settings.flagship_collection.handle == col.handle
+              assign is_flagship = true
+            elsif card_index == 1 and section.settings.force_first_flagship
+              assign is_flagship = true
+            endif
+
+            assign card_image = col.featured_image
+            if card_image == blank and col.products.first != blank
+              assign card_image = col.products.first.featured_image
+            endif
+
+            assign col_title_downcase = col.title | downcase
+            assign discipline_tag = 'general'
+            if col_title_downcase contains 'env' or col_title_downcase contains 'city' or col_title_downcase contains 'world' or col_title_downcase contains 'nature'
+              assign discipline_tag = 'environment'
+            elsif col_title_downcase contains 'prop' or col_title_downcase contains 'weapon' or col_title_downcase contains 'item' or col_title_downcase contains 'snowboard'
+              assign discipline_tag = 'props'
+            elsif col_title_downcase contains 'mod' or col_title_downcase contains 'kit' or col_title_downcase contains 'build'
+              assign discipline_tag = 'modular'
+            elsif col_title_downcase contains 'auto' or col_title_downcase contains 'feat' or col_title_downcase contains 'spotlight'
+              assign discipline_tag = 'featured'
+            endif
+          -%}
+
+          <div
+            class="pf-bento-card {% if is_flagship %}pf-bento-card--flagship{% endif %}"
+            data-title="{{ col.title | escape | downcase }}"
+            data-desc="{{ col.description | strip_html | escape | downcase }}"
+            data-handle="{{ col.handle }}"
+            data-discipline="{{ discipline_tag }}"
+          >
+            <!-- 3D Viewport Presentation Surface -->
+            <a href="{{ col.url }}" class="pf-bento-card__viewport" tabindex="-1" aria-hidden="true">
+              <div class="pf-bento-card__viewport-grid"></div>
+
+              {%- if card_image != blank -%}
+                <img
+                  srcset="
+                    {{ card_image | image_url: width: 400 }} 400w,
+                    {{ card_image | image_url: width: 700 }} 700w,
+                    {{ card_image | image_url: width: 1100 }} 1100w
+                  "
+                  src="{{ card_image | image_url: width: 800 }}"
+                  alt="{{ col.title | escape }}"
+                  loading="lazy"
+                  class="pf-bento-card__img"
+                  sizes="(min-width: 1024px) {% if is_flagship %}65vw{% else %}33vw{% endif %}, 100vw"
+                  width="{{ card_image.width }}"
+                  height="{{ card_image.height }}"
+                >
+              {%- else -%}
+                <div class="pf-bento-card__placeholder">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                  </svg>
+                  <span>3D ASSET DISCIPLINE</span>
+                </div>
+              {%- endif -%}
+
+              <!-- Tactical Viewport Badges -->
+              <div class="pf-bento-card__badges-top">
+                <span class="pf-tag-badge">
+                  DISCIPLINE // 0{{ card_index }}
+                </span>
+                {%- if is_flagship -%}
+                  <span class="pf-tag-badge is-accent">
+                    FLAGSHIP PACK
+                  </span>
+                {%- else -%}
+                  <span class="pf-tag-badge is-live">
+                    VERIFIED PBR
+                  </span>
+                {%- endif -%}
+              </div>
+
+              <div class="pf-bento-card__viewport-overlay"></div>
+            </a>
+
+            <!-- Tactical Information Panel -->
+            <div class="pf-bento-card__body">
+              <div class="pf-bento-card__header-row">
+                <div class="pf-bento-card__title-group">
+                  <span class="pf-bento-card__prefix">PF-CAT-0{{ card_index }}</span>
+                  <h2 class="pf-bento-card__title">
+                    <a href="{{ col.url }}">{{ col.title }}</a>
+                  </h2>
+                </div>
+
+                <span class="pf-bento-card__count-pill">
+                  {{ col.all_products_count | default: 0 }}
+                  {% if col.all_products_count == 1 %}Asset{% else %}Assets{% endif %}
+                </span>
+              </div>
+
+              {%- if col.description != blank -%}
+                <p class="pf-bento-card__desc">
+                  {{ col.description | strip_html | truncate: 120 }}
+                </p>
+              {%- else -%}
+                <p class="pf-bento-card__desc">
+                  Production-ready asset kit with clean quad topology, PBR texture packing, and calibrated collision bounds.
+                </p>
+              {%- endif -%}
+
+              <!-- Technical Specification Chips -->
+              <div class="pf-bento-card__specs">
+                <span class="pf-spec-chip">UE5 Nanite</span>
+                <span class="pf-spec-chip">Unity URP</span>
+                <span class="pf-spec-chip">Clean Quads</span>
+                <span class="pf-spec-chip">4K PBR</span>
+              </div>
+
+              <!-- Interactive 3-Product Thumbnail Preview Strip -->
+              <div class="pf-bento-card__preview-section">
+                <div class="pf-bento-card__preview-label">
+                  <span>Included Assets Preview</span>
+                  <span class="pf-bento-card__preview-count">{{ col.products.size }} of {{ col.all_products_count }} inspected</span>
+                </div>
+
+                <div class="pf-bento-card__thumb-strip">
+                  {%- if col.products.size > 0 -%}
+                    {%- for prod in col.products limit: 3 -%}
+                      <a href="{{ prod.url }}" class="pf-bento-thumb" title="{{ prod.title | escape }}">
+                        {%- if prod.featured_image != blank -%}
+                          <img
+                            src="{{ prod.featured_image | image_url: width: 140, height: 140, crop: 'center' }}"
+                            alt="{{ prod.title | escape }}"
+                            loading="lazy"
+                            width="52"
+                            height="52"
+                          >
+                        {%- else -%}
+                          <div class="pf-bento-thumb__empty">3D</div>
+                        {%- endif -%}
+                        <span class="pf-bento-thumb__tooltip">{{ prod.title | truncate: 22 }}</span>
+                      </a>
+                    {%- endfor -%}
+                  {%- endif -%}
+
+                  {%- assign rendered_thumbs = col.products.size -%}
+                  {%- if rendered_thumbs < 3 -%}
+                    {%- assign diff = 3 | minus: rendered_thumbs -%}
+                    {%- for i in (1..diff) -%}
+                      <div class="pf-bento-thumb is-ghost" title="Pending library asset">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      </div>
+                    {%- endfor -%}
+                  {%- endif -%}
+                </div>
+              </div>
+
+              <!-- Card Action Footer -->
+              <div class="pf-bento-card__footer">
+                <a href="{{ col.url }}" class="pf-bento-card__action-btn">
+                  <span>Explore Collection</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+
+      <!-- Empty Filter/Search State -->
+      <div id="pf-collections-empty" class="pf-bento-empty" style="display: none;">
+        <div class="pf-bento-empty__card">
+          <svg class="pf-bento-empty__icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+          <h3 class="pf-bento-empty__title">No Matching Disciplines Found</h3>
+          <p class="pf-bento-empty__desc">We couldn't find any collections matching your filter criteria. Try searching for "Environment", "Snowboard", or clear filters.</p>
+          <button type="button" id="pf-empty-reset" class="button button--secondary">
+            Reset Filters &amp; View All
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  (function() {
+    function initCollectionsDirectory() {
+      var searchInput = document.getElementById('pf-collections-search');
+      var clearBtn = document.getElementById('pf-search-clear');
+      var filterPills = document.querySelectorAll('.pf-filter-pill');
+      var cards = document.querySelectorAll('.pf-bento-card');
+      var emptyState = document.getElementById('pf-collections-empty');
+      var resetBtn = document.getElementById('pf-empty-reset');
+
+      if (!cards.length) return;
+
+      var currentFilter = 'all';
+      var currentSearch = '';
+
+      function applyFilter() {
+        var visibleCount = 0;
+        var query = currentSearch.trim().toLowerCase();
+
+        cards.forEach(function(card) {
+          var title = (card.getAttribute('data-title') || '').toLowerCase();
+          var desc = (card.getAttribute('data-desc') || '').toLowerCase();
+          var discipline = (card.getAttribute('data-discipline') || 'general').toLowerCase();
+
+          var matchesCategory = (currentFilter === 'all') || (discipline === currentFilter) || (currentFilter === 'featured' && card.classList.contains('pf-bento-card--flagship'));
+          var matchesSearch = !query || title.indexOf(query) !== -1 || desc.indexOf(query) !== -1 || discipline.indexOf(query) !== -1;
+
+          if (matchesCategory && matchesSearch) {
+            card.style.display = '';
+            card.classList.remove('is-hidden');
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+            card.classList.add('is-hidden');
+          }
+        });
+
+        if (emptyState) {
+          emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+
+        if (clearBtn) {
+          clearBtn.style.display = query ? 'inline-flex' : 'none';
+        }
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+          currentSearch = e.target.value;
+          applyFilter();
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+          if (searchInput) searchInput.value = '';
+          currentSearch = '';
+          applyFilter();
+          if (searchInput) searchInput.focus();
+        });
+      }
+
+      filterPills.forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          filterPills.forEach(function(p) { 
+            p.classList.remove('is-active');
+            p.setAttribute('aria-selected', 'false');
+          });
+          pill.classList.add('is-active');
+          pill.setAttribute('aria-selected', 'true');
+          currentFilter = pill.getAttribute('data-filter') || 'all';
+          applyFilter();
+        });
+      });
+
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+          if (searchInput) searchInput.value = '';
+          currentSearch = '';
+          currentFilter = 'all';
+          filterPills.forEach(function(p) {
+            var isAll = p.getAttribute('data-filter') === 'all';
+            p.classList.toggle('is-active', isAll);
+            p.setAttribute('aria-selected', isAll ? 'true' : 'false');
+          });
+          applyFilter();
+        });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCollectionsDirectory);
+    } else {
+      initCollectionsDirectory();
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Collections Directory",
+  "tag": "section",
+  "class": "pf-collections-directory-wrapper",
+  "settings": [
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Kicker Note",
+      "default": "CATALOG INDEX // 3D PIPELINE"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Page Title",
+      "default": "Asset Collections & Disciplines"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Description",
+      "default": "Production-ready 3D components organized by environment, character, modular kits, and engine prefabs. Calibrated topology and PBR for seamless pipeline integration."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_metrics",
+      "label": "Show Global Catalog Metrics Strip",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show Command Bar (Search & Discipline Filters)",
+      "default": true
+    },
+    {
+      "type": "collection",
+      "id": "flagship_collection",
+      "label": "Flagship Hero Collection",
+      "info": "Designate a primary collection for the large 2-column bento spotlight card"
+    },
+    {
+      "type": "checkbox",
+      "id": "force_first_flagship",
+      "label": "Make First Collection Flagship",
+      "default": true,
+      "info": "Automatically enlarges the first collection card if no specific flagship is assigned"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 16,
+      "max": 96,
+      "step": 8,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 16,
+      "max": 128,
+      "step": 8,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection_card",
+      "name": "Collection Card",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        },
+        {
+          "type": "checkbox",
+          "id": "is_flagship",
+          "label": "Make Flagship Spotlight Card",
+          "default": false,
+          "info": "Expands card into a 2-column prominent bento feature"
+        },
+        {
+          "type": "text",
+          "id": "custom_kicker",
+          "label": "Custom Discipline Code",
+          "placeholder": "PF-ENV // 01"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "Custom 3D Render Image",
+          "info": "Overrides the default collection featured image"
+        },
+        {
+          "type": "textarea",
+          "id": "custom_desc",
+          "label": "Custom Technical Overview",
+          "info": "Overrides default collection description"
+        },
+        {
+          "type": "text",
+          "id": "engine_tags",
+          "label": "Engine & Pipeline Badges",
+          "default": "UE5 Nanite · Unity URP · 4K PBR · FBX",
+          "info": "Separate badges with a middle dot (·)"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
