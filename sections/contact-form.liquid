@@ -14,210 +14,339 @@
   }
 {%- endstyle -%}
 
-<div class="color-{{ section.settings.color_scheme }} gradient">
-  <div class="contact page-width page-width--narrow section-{{ section.id }}-padding">
-    {%- if section.settings.heading != blank -%}
-      <h2 class="title title-wrapper--no-top-margin inline-richtext {{ section.settings.heading_size }}">
-        {{ section.settings.heading }}
-      </h2>
-    {%- else -%}
-      <h2 class="visually-hidden">{{ 'templates.contact.form.title' | t }}</h2>
-    {%- endif -%}
-    {%- form 'contact', id: 'ContactForm', class: 'isolate' -%}
-      {%- if form.posted_successfully? -%}
-        <h2 class="form-status form-status-list form__message" tabindex="-1" autofocus>
-          {% render 'icon-success' %}
-          {{ 'templates.contact.form.post_success' | t }}
-        </h2>
-      {%- elsif form.errors -%}
-        <div class="form__message">
-          <h2 class="form-status caption-large text-body" role="alert" tabindex="-1" autofocus>
-            {% render 'icon-error' %}
-            {{ 'templates.contact.form.error_heading' | t }}
-          </h2>
+<div class="pf-contact-section section-{{ section.id }}-padding">
+  <div class="pf-contact-wrap">
+    <!-- Header -->
+    <div class="pf-contact-header">
+      <div class="pf-contact-kicker">
+        <span class="pf-contact-pulse"></span>
+        {{ section.settings.kicker | default: 'Studio Transmission & Pipeline Support' }}
+      </div>
+      <h1 class="pf-contact-title">
+        {{ section.settings.heading | default: "Let's Build Something Exceptional." }}
+      </h1>
+      <p class="pf-contact-subtitle">
+        {{ section.settings.subheading | default: 'Have a custom asset commission, technical integration question (UE5 / Unity / Godot), or studio licensing inquiry? Reach our 3D engineering artists directly.' }}
+      </p>
+    </div>
+
+    <!-- 2-Column Studio Split Layout -->
+    <div class="pf-contact-split">
+      <!-- Left Column: Studio Channels & Technical Guarantees -->
+      <div class="pf-contact-info-col">
+        <!-- Direct Channels Card -->
+        <div class="pf-contact-card">
+          <h3 class="pf-card-heading">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--pf-accent, #ff5a1f);">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            Direct Studio Inquiries
+          </h3>
+
+          <div class="pf-channel-list">
+            <div class="pf-channel-item">
+              <div class="pf-channel-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </div>
+              <div class="pf-channel-content">
+                <span class="pf-channel-label">Technical Studio Email</span>
+                <a href="mailto:{{ section.settings.email | default: 'studio@playforges.com' }}" class="pf-channel-val">
+                  {{ section.settings.email | default: 'studio@playforges.com' }}
+                </a>
+              </div>
+            </div>
+
+            <div class="pf-channel-item">
+              <div class="pf-channel-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="pf-channel-content">
+                <span class="pf-channel-label">Response Commitment</span>
+                <span class="pf-channel-val">{{ section.settings.response_time | default: 'Under 24 hours (Mon–Fri)' }}</span>
+              </div>
+            </div>
+
+            <div class="pf-channel-item">
+              <div class="pf-channel-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </div>
+              <div class="pf-channel-content">
+                <span class="pf-channel-label">Studio Operating Region</span>
+                <span class="pf-channel-val">GMT+8 (Philippines / APAC Hub)</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <ul class="form-status-list caption-large" role="list">
-          <li>
-            <a href="#ContactForm-email" class="link">
-              {{ form.errors.translated_fields.email | capitalize }}
-              {{ form.errors.messages.email }}
-            </a>
-          </li>
-        </ul>
-      {%- endif -%}
-      <div class="contact__fields">
-        <div class="field">
-          <input
-            class="field__input"
-            autocomplete="name"
-            type="text"
-            id="ContactForm-name"
-            name="contact[{{ 'templates.contact.form.name' | t }}]"
-            value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}"
-            placeholder="{{ 'templates.contact.form.name' | t }}"
-          >
-          <label class="field__label" for="ContactForm-name">{{ 'templates.contact.form.name' | t }}</label>
+
+        <!-- Technical Standards Card -->
+        <div class="pf-contact-card">
+          <h3 class="pf-card-heading">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--pf-accent, #ff5a1f);">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            PlayForge Production Standards
+          </h3>
+
+          <div class="pf-channel-list">
+            <div class="pf-channel-item">
+              <div class="pf-channel-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+              </div>
+              <div class="pf-channel-content">
+                <span class="pf-channel-val" style="font-size: 1.3rem;">Clean Quad Topology</span>
+                <span class="pf-channel-label" style="text-transform: none; font-size: 1.2rem;">LOD0–LOD3 hierarchies, zero non-manifold faces, clean UV lightmaps.</span>
+              </div>
+            </div>
+
+            <div class="pf-channel-item">
+              <div class="pf-channel-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </div>
+              <div class="pf-channel-content">
+                <span class="pf-channel-val" style="font-size: 1.3rem;">Target Engine Pipeline Matrix</span>
+                <div class="pf-engine-tags">
+                  <span class="pf-engine-tag"><span></span>Unreal Engine 5</span>
+                  <span class="pf-engine-tag"><span></span>Unity 2022+</span>
+                  <span class="pf-engine-tag"><span></span>Godot 4</span>
+                  <span class="pf-engine-tag"><span></span>Blender 4.x</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="field field--with-error">
-          <input
-            autocomplete="email"
-            type="email"
-            id="ContactForm-email"
-            class="field__input"
-            name="contact[email]"
-            spellcheck="false"
-            autocapitalize="off"
-            value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}"
-            aria-required="true"
-            {% if form.errors contains 'email' %}
-              aria-invalid="true"
-              aria-describedby="ContactForm-email-error"
-            {% endif %}
-            placeholder="{{ 'templates.contact.form.email' | t }}"
-          >
-          <label class="field__label" for="ContactForm-email">
-            {{- 'templates.contact.form.email' | t }}
-            <span aria-hidden="true">*</span></label
-          >
-          {%- if form.errors contains 'email' -%}
-            <small class="contact__field-error" id="ContactForm-email-error">
-              <span class="visually-hidden">{{ 'accessibility.error' | t }}</span>
-              <span class="form__message">
-                {%- render 'icon-error' -%}
-                {{- form.errors.translated_fields.email | capitalize }}
-                {{ form.errors.messages.email -}}
-              </span>
-            </small>
+      </div>
+
+      <!-- Right Column: Interactive Studio Transmission Console -->
+      <div class="pf-contact-form-card">
+        <div class="pf-form-card-top">
+          <h2 class="pf-form-title">Direct Studio Message</h2>
+        </div>
+
+        {%- form 'contact', id: 'ContactForm', class: 'pf-contact-form-inner' -%}
+          {%- if form.posted_successfully? -%}
+            <div class="pf-form-alert pf-form-alert--success" role="status" tabindex="-1" autofocus>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <div>
+                <strong>Transmission Received.</strong><br>
+                Thank you! Our technical art team has received your message and will review your pipeline specifications shortly.
+              </div>
+            </div>
+          {%- elsif form.errors -%}
+            <div class="pf-form-alert pf-form-alert--error" role="alert" tabindex="-1" autofocus>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <div>
+                <strong>Please check your submission:</strong><br>
+                {{ form.errors | default_errors }}
+              </div>
+            </div>
           {%- endif -%}
-        </div>
+
+          <!-- Inquiry Category Selector -->
+          <div class="pf-inquiry-chips-wrap">
+            <label class="pf-inquiry-label">Select Inquiry Category</label>
+            <input type="hidden" name="contact[Inquiry Category]" id="pf-inquiry-category" value="Engine Integration">
+            <div class="pf-inquiry-chips" role="radiogroup">
+              <button type="button" class="pf-chip-btn is-active" data-cat="Engine Integration">Engine Integration</button>
+              <button type="button" class="pf-chip-btn" data-cat="Custom 3D Commission">Custom Commission</button>
+              <button type="button" class="pf-chip-btn" data-cat="Commercial Licensing">Commercial Licensing</button>
+              <button type="button" class="pf-chip-btn" data-cat="Technical Asset Support">Asset Support</button>
+            </div>
+          </div>
+
+          <!-- Name & Email Row -->
+          <div class="pf-form-grid-2">
+            <div class="pf-field-group">
+              <label for="ContactForm-name">Your Name *</label>
+              <input
+                type="text"
+                id="ContactForm-name"
+                name="contact[name]"
+                class="pf-input"
+                required
+                autocomplete="name"
+                value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}"
+                placeholder="e.g. Alex Rivera"
+              >
+            </div>
+
+            <div class="pf-field-group">
+              <label for="ContactForm-email">Studio / Developer Email *</label>
+              <input
+                type="email"
+                id="ContactForm-email"
+                name="contact[email]"
+                class="pf-input"
+                required
+                autocomplete="email"
+                spellcheck="false"
+                autocapitalize="off"
+                value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}"
+                placeholder="alex@studio.com"
+              >
+            </div>
+          </div>
+
+          <!-- Phone / Discord Row -->
+          <div class="pf-field-group">
+            <label for="ContactForm-phone">Phone or Discord Handle (Optional)</label>
+            <input
+              type="text"
+              id="ContactForm-phone"
+              name="contact[phone_or_discord]"
+              class="pf-input"
+              value="{% if form.phone %}{{ form.phone }}{% endif %}"
+              placeholder="e.g. +63 912 345 6789 or @alex_3d"
+            >
+          </div>
+
+          <!-- Message Textarea -->
+          <div class="pf-field-group">
+            <label for="ContactForm-body">Project Details or Technical Query *</label>
+            <textarea
+              id="ContactForm-body"
+              name="contact[body]"
+              class="pf-textarea"
+              rows="6"
+              required
+              placeholder="Describe your engine target, target polygon budget, LOD requirements, or questions..."
+            >{{ form.body }}</textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="pf-contact-submit-btn">
+            Transmit Message to Studio
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+
+          <!-- Trust & Encryption Note -->
+          <div class="pf-form-trust-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--pf-accent, #ff5a1f);">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            256-bit encrypted studio transmission. Your project data is never shared.
+          </div>
+        {%- endform -%}
       </div>
-      <div class="field">
-        <input
-          type="tel"
-          id="ContactForm-phone"
-          class="field__input"
-          autocomplete="tel"
-          name="contact[{{ 'templates.contact.form.phone' | t }}]"
-          pattern="[0-9\-]*"
-          value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}"
-          placeholder="{{ 'templates.contact.form.phone' | t }}"
-        >
-        <label class="field__label" for="ContactForm-phone">{{ 'templates.contact.form.phone' | t }}</label>
-      </div>
-      <div class="field">
-        <textarea
-          rows="10"
-          id="ContactForm-body"
-          class="text-area field__input"
-          name="contact[{{ 'templates.contact.form.comment' | t }}]"
-          placeholder="{{ 'templates.contact.form.comment' | t }}"
-        >
-          {{- form.body -}}
-        </textarea>
-        <label class="form__label field__label" for="ContactForm-body">
-          {{- 'templates.contact.form.comment' | t -}}
-        </label>
-      </div>
-      <div class="contact__button">
-        <button type="submit" class="button">
-          {{ 'templates.contact.form.send' | t }}
-        </button>
-      </div>
-    {%- endform -%}
+    </div>
   </div>
 </div>
 
+<script>
+  (function() {
+    function initPfContactChips() {
+      var chips = document.querySelectorAll('.pf-chip-btn');
+      var catInput = document.getElementById('pf-inquiry-category');
+      if (!chips.length) return;
+      chips.forEach(function(chip) {
+        chip.addEventListener('click', function(e) {
+          e.preventDefault();
+          chips.forEach(function(c) { c.classList.remove('is-active'); });
+          chip.classList.add('is-active');
+          if (catInput) {
+            catInput.value = chip.getAttribute('data-cat') || 'General Inquiry';
+          }
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPfContactChips);
+    } else {
+      initPfContactChips();
+    }
+    document.addEventListener('shopify:section:load', initPfContactChips);
+  })();
+</script>
+
 {% schema %}
 {
-  "name": "t:sections.contact-form.name",
+  "name": "Studio Contact",
   "tag": "section",
-  "class": "section",
-  "disabled_on": {
-    "groups": ["header", "footer"]
-  },
+  "class": "pf-contact-section-wrapper",
   "settings": [
     {
-      "type": "inline_richtext",
+      "type": "text",
+      "id": "kicker",
+      "label": "Kicker Note",
+      "default": "Studio Transmission & Pipeline Support"
+    },
+    {
+      "type": "text",
       "id": "heading",
-      "default": "Contact form",
-      "label": "Heading"
+      "label": "Heading",
+      "default": "Let's Build Something Exceptional."
     },
     {
-      "type": "select",
-      "id": "heading_size",
-      "options": [
-        {
-          "value": "h2",
-          "label": "t:sections.all.heading_size.options__1.label"
-        },
-        {
-          "value": "h1",
-          "label": "t:sections.all.heading_size.options__2.label"
-        },
-        {
-          "value": "h0",
-          "label": "t:sections.all.heading_size.options__3.label"
-        }
-      ],
-      "default": "h1",
-      "label": "t:sections.all.heading_size.label"
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Have a custom asset commission, technical integration question (UE5 / Unity / Godot), or studio licensing inquiry? Reach our 3D engineering artists directly."
     },
     {
-      "type": "select",
-      "id": "color_scheme",
-      "options": [
-        {
-          "value": "accent-1",
-          "label": "t:sections.all.colors.accent_1.label"
-        },
-        {
-          "value": "accent-2",
-          "label": "t:sections.all.colors.accent_2.label"
-        },
-        {
-          "value": "background-1",
-          "label": "t:sections.all.colors.background_1.label"
-        },
-        {
-          "value": "background-2",
-          "label": "t:sections.all.colors.background_2.label"
-        },
-        {
-          "value": "inverse",
-          "label": "t:sections.all.colors.inverse.label"
-        }
-      ],
-      "default": "background-1",
-      "label": "t:sections.all.colors.label"
+      "type": "text",
+      "id": "email",
+      "label": "Studio Support Email",
+      "default": "studio@playforges.com"
     },
     {
-      "type": "header",
-      "content": "t:sections.all.padding.section_padding_heading"
+      "type": "text",
+      "id": "response_time",
+      "label": "Response Time Note",
+      "default": "Under 24 hours (Mon–Fri)"
     },
     {
       "type": "range",
       "id": "padding_top",
-      "min": 0,
-      "max": 100,
+      "min": 20,
+      "max": 120,
       "step": 4,
       "unit": "px",
-      "label": "t:sections.all.padding.padding_top",
-      "default": 36
+      "label": "Padding Top",
+      "default": 48
     },
     {
       "type": "range",
       "id": "padding_bottom",
-      "min": 0,
-      "max": 100,
+      "min": 20,
+      "max": 120,
       "step": 4,
       "unit": "px",
-      "label": "t:sections.all.padding.padding_bottom",
-      "default": 36
+      "label": "Padding Bottom",
+      "default": 64
     }
   ],
   "presets": [
     {
-      "name": "t:sections.contact-form.presets.name"
+      "name": "Studio Contact"
     }
   ]
 }

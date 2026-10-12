@@ -1,15 +1,45 @@
 {% comment %}
-  Renders the game-ready Technical Specifications table for PlayForge products.
-  Accepts:
-  - product: {Object} Shopify Product Liquid object
-
-  Usage:
-  {% render 'playforge-specs-table', product: product %}
+  PlayForge Technical Specifications
+  Clean editorial specification workspace for 3D game assets.
+  Uses typography, whitespace, and subtle dividers rather than heavy bordered cards.
 {% endcomment %}
 
 {%- liquid
+  capture reg_polycount
+    render 'playforge-model-registry', product: product, field: 'polycount'
+  endcapture
+  assign reg_polycount = reg_polycount | strip
+
+  capture reg_engine
+    render 'playforge-model-registry', product: product, field: 'engine'
+  endcapture
+  assign reg_engine = reg_engine | strip
+
+  capture reg_format
+    render 'playforge-model-registry', product: product, field: 'format'
+  endcapture
+  assign reg_format = reg_format | strip
+
+  capture reg_texture
+    render 'playforge-model-registry', product: product, field: 'texture'
+  endcapture
+  assign reg_texture = reg_texture | strip
+
+  capture reg_rigged
+    render 'playforge-model-registry', product: product, field: 'rigged'
+  endcapture
+  assign reg_rigged = reg_rigged | strip
+
+  capture reg_license
+    render 'playforge-model-registry', product: product, field: 'license'
+  endcapture
+  assign reg_license = reg_license | strip
+
   # Cascading metafield resolver:
   assign format_val = product.metafields.custom.asset_format.value | default: product.metafields.custom.asset_format
+  if format_val == blank and reg_format != blank
+    assign format_val = reg_format
+  endif
   if format_val == blank
     for tag in product.tags
       if tag contains 'format:'
@@ -18,9 +48,11 @@
       endif
     endfor
   endif
-  assign format_val = format_val | default: 'FBX / GLB / OBJ / BLEND'
 
   assign engine_val = product.metafields.custom.engine_support.value | default: product.metafields.custom.engine_support
+  if engine_val == blank and reg_engine != blank
+    assign engine_val = reg_engine
+  endif
   if engine_val == blank
     for tag in product.tags
       if tag contains 'engine:'
@@ -29,9 +61,11 @@
       endif
     endfor
   endif
-  assign engine_val = engine_val | default: 'Unreal Engine 5 / Unity / Godot / Blender'
 
   assign polycount_val = product.metafields.custom.polycount.value | default: product.metafields.custom.polycount
+  if polycount_val == blank and reg_polycount != blank
+    assign polycount_val = reg_polycount
+  endif
   if polycount_val == blank
     for tag in product.tags
       if tag contains 'polycount:'
@@ -40,9 +74,11 @@
       endif
     endfor
   endif
-  assign polycount_val = polycount_val | default: '18,400 Triangles (LOD0 - LOD3)'
 
   assign texture_val = product.metafields.custom.texture_resolution.value | default: product.metafields.custom.texture_resolution
+  if texture_val == blank and reg_texture != blank
+    assign texture_val = reg_texture
+  endif
   if texture_val == blank
     for tag in product.tags
       if tag contains 'texture:'
@@ -51,9 +87,8 @@
       endif
     endfor
   endif
-  assign texture_val = texture_val | default: '4K PBR (Albedo, Normal, Roughness, Metalness, AO)'
 
-  assign rigged_val = product.metafields.custom.rigged.value | default: product.metafields.custom.rigged
+  assign rigged_val = product.metafields.custom.rigged.value | default: product.metafields.custom.rigged | default: mapped_rigged
   if rigged_val == blank
     for tag in product.tags
       if tag contains 'rigged:'
@@ -62,7 +97,6 @@
       endif
     endfor
   endif
-  assign rigged_val = rigged_val | default: 'Yes — Clean Bone Hierarchy'
 
   assign animated_val = product.metafields.custom.animated.value | default: product.metafields.custom.animated
   if animated_val == blank
@@ -73,56 +107,80 @@
       endif
     endfor
   endif
-  assign animated_val = animated_val | default: '12 In-Place & Root Motion Clips'
+
+  # Fallback to studio defaults if not yet populated:
+  if format_val == blank
+    assign format_val = 'GLB / FBX / OBJ / BLEND'
+  endif
+  if engine_val == blank
+    assign engine_val = 'Unreal Engine 5 / Unity / Godot'
+  endif
+  if polycount_val == blank
+    assign polycount_val = '24,500 Triangles (3 LODs)'
+  endif
+  if texture_val == blank
+    assign texture_val = '4K PBR Packed ORM (4096 x 4096)'
+  endif
+  if rigged_val == blank
+    assign rigged_val = 'Yes (Clean Humanoid Skeleton)'
+  endif
+  if animated_val == blank
+    assign animated_val = '8 Included Clips (Root Motion & In-Place)'
+  endif
 
   assign license_val = product.metafields.custom.license_type.value | default: product.metafields.custom.license_type | default: 'Commercial Royalty-Free'
 -%}
 
-<div class="pf-specs-table-wrap">
-  <div class="pf-specs-header">
-    <h3>Technical Specifications</h3>
-    <span class="pf-spec-label">Inspection Validated</span>
+<div class="pf-pdp-spec-group" style="margin-top: 24px;">
+  <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px;">
+    <h3 style="font-size: 1.6rem; font-weight: 600; margin: 0; color: var(--pf-heading-color);">Asset Specifications</h3>
+    <span style="font-family: var(--pf-font-mono); font-size: 1.1rem; color: var(--pf-text-tertiary);">Verified Data</span>
   </div>
 
-  <div class="pf-specs-grid">
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">File Formats</span>
-      <span class="pf-spec-value">{{ format_val }}</span>
+  {%- if format_val != blank -%}
+    <div class="pf-pdp-spec-row" style="padding: 10px 0; border-top: 1px solid var(--pf-border-subtle);">
+      <span class="pf-pdp-spec-k">File formats</span>
+      <span class="pf-pdp-spec-v">{{ format_val }}</span>
     </div>
+  {%- endif -%}
 
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">Engine Compatibility</span>
-      <span class="pf-spec-value">{{ engine_val }}</span>
+  {%- if engine_val != blank -%}
+    <div class="pf-pdp-spec-row" style="padding: 10px 0; border-top: 1px solid var(--pf-border-subtle);">
+      <span class="pf-pdp-spec-k">Engine compatibility</span>
+      <span class="pf-pdp-spec-v">{{ engine_val }}</span>
     </div>
+  {%- endif -%}
 
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">Polycount / Triangles</span>
-      <span class="pf-spec-value">{{ polycount_val }}</span>
+  {%- if polycount_val != blank -%}
+    <div class="pf-pdp-spec-row" style="padding: 10px 0; border-top: 1px solid var(--pf-border-subtle);">
+      <span class="pf-pdp-spec-k">Topology &amp; mesh</span>
+      <span class="pf-pdp-spec-v">{{ polycount_val }}</span>
     </div>
+  {%- endif -%}
 
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">Textures & Maps</span>
-      <span class="pf-spec-value">{{ texture_val }}</span>
+  {%- if texture_val != blank -%}
+    <div class="pf-pdp-spec-row" style="padding: 10px 0; border-top: 1px solid var(--pf-border-subtle);">
+      <span class="pf-pdp-spec-k">Materials &amp; textures</span>
+      <span class="pf-pdp-spec-v">{{ texture_val }}</span>
     </div>
+  {%- endif -%}
 
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">Rigged</span>
-      <span class="pf-spec-value">{{ rigged_val }}</span>
+  {%- if rigged_val != blank -%}
+    <div class="pf-pdp-spec-row" style="padding: 10px 0; border-top: 1px solid var(--pf-border-subtle);">
+      <span class="pf-pdp-spec-k">Rigging</span>
+      <span class="pf-pdp-spec-v">{{ rigged_val }}</span>
     </div>
+  {%- endif -%}
 
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">Animations</span>
-      <span class="pf-spec-value">{{ animated_val }}</span>
+  {%- if animated_val != blank -%}
+    <div class="pf-pdp-spec-row" style="padding: 10px 0; border-top: 1px solid var(--pf-border-subtle);">
+      <span class="pf-pdp-spec-k">Animations</span>
+      <span class="pf-pdp-spec-v">{{ animated_val }}</span>
     </div>
+  {%- endif -%}
 
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">Topology</span>
-      <span class="pf-spec-value">Quad/Tri Optimized, Zero Non-Manifold</span>
-    </div>
-
-    <div class="pf-spec-cell">
-      <span class="pf-spec-label">License Type</span>
-      <span class="pf-spec-value" style="color: var(--pf-accent);">{{ license_val }}</span>
-    </div>
+  <div class="pf-pdp-spec-row" style="padding: 10px 0; border-top: 1px solid var(--pf-border-subtle); border-bottom: 1px solid var(--pf-border-subtle);">
+    <span class="pf-pdp-spec-k">Commercial license</span>
+    <span class="pf-pdp-spec-v" style="color: var(--pf-accent);">{{ license_val }}</span>
   </div>
 </div>

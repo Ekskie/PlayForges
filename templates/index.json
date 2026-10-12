@@ -3,20 +3,14 @@
     "playforge_hero": {
       "type": "playforge-hero-showcase",
       "settings": {
-        "badge_text": "Production-Grade Game Assets",
-        "heading": "Build worlds <span>faster.</span>",
-        "subheading": "PlayForge provides production-ready 3D assets for indie game developers, environment artists, and studios. Clean topology, calibrated 4K PBR, and native engine prefabs.",
-        "primary_cta_label": "Browse Assets",
+        "kicker": "Independent 3D Studio Catalog",
+        "heading": "Build your world. One asset at a time.",
+        "subheading": "Production-ready 3D components with clean quad topology, calibrated PBR, and native engine prefabs for Unreal Engine and Unity.",
+        "primary_cta_label": "Browse assets",
         "primary_cta_link": "shopify://collections/all",
-        "secondary_cta_label": "Explore Free Assets",
-        "secondary_cta_link": "#free-assets",
+        "secondary_cta_label": "",
+        "secondary_cta_link": "",
         "model_url": "",
-        "stat_1_val": "12,000+",
-        "stat_1_label": "Verified Meshes",
-        "stat_2_val": "100%",
-        "stat_2_label": "4K PBR Calibrated",
-        "stat_3_val": "UE5 & Unity",
-        "stat_3_label": "Native Prefabs",
         "padding_top": 48,
         "padding_bottom": 64
       }
@@ -28,7 +22,7 @@
           "type": "category",
           "settings": {
             "title": "Environment",
-            "count": "2,420 Assets",
+            "count": "Browse assets",
             "icon": "building",
             "link": "shopify://collections/all"
           }
@@ -37,7 +31,7 @@
           "type": "category",
           "settings": {
             "title": "Props",
-            "count": "3,890 Assets",
+            "count": "Browse assets",
             "icon": "cube",
             "link": "shopify://collections/all"
           }
@@ -46,7 +40,7 @@
           "type": "category",
           "settings": {
             "title": "Weapons",
-            "count": "840 Assets",
+            "count": "Browse assets",
             "icon": "shield",
             "link": "shopify://collections/all"
           }
@@ -55,7 +49,7 @@
           "type": "category",
           "settings": {
             "title": "Characters",
-            "count": "610 Assets",
+            "count": "Browse assets",
             "icon": "user",
             "link": "shopify://collections/all"
           }
@@ -64,7 +58,7 @@
           "type": "category",
           "settings": {
             "title": "Vehicles",
-            "count": "450 Assets",
+            "count": "Browse assets",
             "icon": "truck",
             "link": "shopify://collections/all"
           }
@@ -73,7 +67,7 @@
           "type": "category",
           "settings": {
             "title": "Nature",
-            "count": "1,220 Assets",
+            "count": "Browse assets",
             "icon": "tree",
             "link": "shopify://collections/all"
           }
@@ -82,7 +76,7 @@
           "type": "category",
           "settings": {
             "title": "Buildings",
-            "count": "780 Assets",
+            "count": "Browse assets",
             "icon": "building",
             "link": "shopify://collections/all"
           }
@@ -91,7 +85,7 @@
           "type": "category",
           "settings": {
             "title": "Modular Kits",
-            "count": "930 Assets",
+            "count": "Browse assets",
             "icon": "grid",
             "link": "shopify://collections/all"
           }
@@ -100,7 +94,7 @@
           "type": "category",
           "settings": {
             "title": "VFX",
-            "count": "390 Assets",
+            "count": "Browse assets",
             "icon": "zap",
             "link": "shopify://collections/all"
           }
@@ -119,9 +113,9 @@
       ],
       "settings": {
         "kicker": "Asset Disciplines",
-        "heading": "Browse by Category",
-        "subheading": "Discover game-ready 3D components organized by pipeline discipline and environment requirements.",
-        "view_all_label": "All Categories",
+        "heading": "Explore by Category",
+        "subheading": "Discover 3D game assets organized by pipeline discipline and technical requirements.",
+        "view_all_label": "All categories",
         "view_all_link": "shopify://collections/all",
         "padding_top": 48,
         "padding_bottom": 48
@@ -130,12 +124,12 @@
     "playforge_featured": {
       "type": "playforge-featured-assets",
       "settings": {
-        "kicker": "Verified Game Models",
-        "heading": "Featured 3D Assets",
-        "subheading": "Hover over any asset to inspect topology and materials in real-time 3D.",
+        "kicker": "Curated Catalog",
+        "heading": "Featured Assets",
+        "subheading": "Inspected and verified 3D assets ready for deployment into modern real-time game engines.",
         "collection": "automated-collection",
-        "products_to_show": 8,
-        "view_all_label": "Browse All Assets",
+        "products_to_show": 7,
+        "view_all_label": "Browse catalog",
         "view_all_link": "shopify://collections/all",
         "padding_top": 48,
         "padding_bottom": 48
@@ -144,11 +138,11 @@
     "playforge_spotlight": {
       "type": "playforge-featured-collection",
       "settings": {
-        "kicker": "Spotlight Environment Kit",
+        "kicker": "Featured Collection",
         "heading": "Post-Apocalyptic City",
-        "description": "Complete modular kit for overgrown urban dystopias. Includes collapsed highway spans, barricades, modular tenement facades, weathered props, and custom foliage shaders calibrated for Unreal Engine 5 and Unity HDRP.",
+        "description": "Complete modular environment collection with clean topology, calibrated PBR shaders, and native engine prefabs.",
         "model_url": "",
-        "cta_label": "Explore Complete Kit",
+        "cta_label": "Explore collection",
         "cta_link": "shopify://collections/all",
         "padding_top": 48,
         "padding_bottom": 48
@@ -156,12 +150,13 @@
     },
     "playforge_free": {
       "type": "playforge-free-assets",
+      "disabled": true,
       "settings": {
-        "kicker": "$0 Starter Models",
-        "heading": "Free Developer Assets",
-        "subheading": "Test our quad topology, calibrated PBR shaders, and LOD hierarchies directly inside your game engine at zero cost.",
+        "kicker": "Starter Library",
+        "heading": "Free Assets",
+        "subheading": "Test topology, material response, and engine integration in your pipeline with no commitment.",
         "products_to_show": 4,
-        "view_all_label": "Explore Free Library",
+        "view_all_label": "Browse free assets",
         "view_all_link": "shopify://collections/all",
         "padding_top": 48,
         "padding_bottom": 48
@@ -173,7 +168,7 @@
         "pillar_1": {
           "type": "pillar",
           "settings": {
-            "title": "Game-Ready Topology",
+            "title": "Clean Quad Topology",
             "description": "Clean quads and tris with intentional edge loops, zero non-manifold vertices, optimized silhouette density, and full LOD0 to LOD3 hierarchies."
           }
         },
@@ -181,20 +176,20 @@
           "type": "pillar",
           "settings": {
             "title": "Calibrated PBR Materials",
-            "description": "100% physically based rendering textures packed for Unreal (ORM: Occlusion/Roughness/Metallic) and Unity (Mask Map) in crisp 2K and 4K resolutions."
+            "description": "100% physically based rendering textures packed for Unreal ORM and Unity Mask maps in crisp 2K and 4K resolutions."
           }
         },
         "pillar_3": {
           "type": "pillar",
           "settings": {
-            "title": "Universal Multi-Format Pipeline",
-            "description": "Every model includes native industry-standard exports: FBX, GLB/glTF, OBJ, BLEND, and USDZ for maximum pipeline flexibility."
+            "title": "Multi-Format Exports",
+            "description": "Every model includes native industry-standard exports: FBX, GLB/glTF, OBJ, and BLEND for maximum pipeline flexibility."
           }
         },
         "pillar_4": {
           "type": "pillar",
           "settings": {
-            "title": "Commercial-Friendly Licensing",
+            "title": "Commercial Licensing",
             "description": "Straightforward royalty-free commercial licenses. Use assets across unlimited commercial games, interactive apps, and cinematic productions."
           }
         },
@@ -214,11 +209,20 @@
         "pillar_5"
       ],
       "settings": {
-        "kicker": "The PlayForge Standard",
+        "kicker": "Studio Standard",
         "heading": "Engine-Ready Architecture",
         "subheading": "Every asset in our catalog undergoes rigorous technical validation to ensure seamless drag-and-drop integration into modern game pipelines.",
         "padding_top": 64,
         "padding_bottom": 64
+      }
+    },
+    "playforge_bundle": {
+      "type": "playforge-bundle-builder",
+      "disabled": true,
+      "settings": {
+        "kicker": "Interactive Custom Kit",
+        "heading": "Modular 3D Environment Bundle Builder",
+        "subheading": "Assemble complete scene kits with real-time 3D inspection and save 25% on combined licensing."
       }
     },
     "playforge_specs": {
@@ -236,6 +240,7 @@
     "playforge_categories",
     "playforge_featured",
     "playforge_spotlight",
+    "playforge_bundle",
     "playforge_free",
     "playforge_why",
     "playforge_specs"

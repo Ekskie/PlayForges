@@ -380,7 +380,7 @@
               {%- unless in_cart -%}
                 {%- if shown_rec < 3 -%}
                   <div class="pf-cross-sell-item">
-                    <img src="{{ rec_prod.featured_media | image_url: width: 100 }}" class="pf-cross-sell-thumb" alt="{{ rec_prod.title | escape }}">
+                    <img src="{{ rec_prod.featured_media | image_url: width: 100 }}" class="pf-cross-sell-thumb" alt="{{ rec_prod.title | escape }}" width="64" height="64" loading="lazy">
                     <div class="pf-cross-sell-details">
                       <div class="pf-cross-sell-name">{{ rec_prod.title | escape }}</div>
                       <div class="pf-cross-sell-price">{{ rec_prod.price | money }}</div>

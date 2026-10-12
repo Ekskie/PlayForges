@@ -60,9 +60,9 @@
       "block_order": [
         "title",
         "vendor",
+        "price",
         "variant_picker",
         "quantity_selector",
-        "price",
         "buy_buttons",
         "description",
         "share"

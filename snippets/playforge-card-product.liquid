@@ -16,8 +16,31 @@
 
 {%- if card_product and card_product != empty -%}
   {%- liquid
-    # 1. Resolve 3D model source: Metafield -> Native Media -> Curated demo fallback
+    # 1. Resolve 3D model source: Registry -> Metafield -> Native Media -> Curated demo fallback
+    capture reg_model
+      render 'playforge-model-registry', product: card_product, field: 'model'
+    endcapture
+    assign reg_model = reg_model | strip
+
+    capture reg_title
+      render 'playforge-model-registry', product: card_product, field: 'title'
+    endcapture
+    assign reg_title = reg_title | strip
+    if reg_title != blank
+      assign card_title = reg_title
+    else
+      assign card_title = card_product.title
+    endif
+
+    capture reg_cat
+      render 'playforge-model-registry', product: card_product, field: 'category'
+    endcapture
+    assign reg_cat = reg_cat | strip
+
     assign model_url = card_product.metafields.custom.model_3d.value | default: card_product.metafields.custom.model_3d
+    if reg_model != blank
+      assign model_url = reg_model
+    endif
     
     if model_url == blank
       for media in card_product.media
@@ -53,6 +76,9 @@
 
     # 3. Resolve Category
     assign cat_val = card_product.metafields.custom.asset_category.value | default: card_product.metafields.custom.asset_category
+    if reg_cat != blank
+      assign cat_val = reg_cat
+    endif
     if cat_val == blank and card_product.type != blank
       assign cat_val = card_product.type
     endif
@@ -64,7 +90,9 @@
         endif
       endfor
     endif
-    assign cat_val = cat_val | default: 'PROPS & WEAPONS'
+    if cat_val == blank and card_product.vendor != blank
+      assign cat_val = card_product.vendor
+    endif
 
     # 4. Resolve Polycount
     assign poly_val = card_product.metafields.custom.polycount.value | default: card_product.metafields.custom.polycount
@@ -76,7 +104,6 @@
         endif
       endfor
     endif
-    assign poly_val = poly_val | default: '14.2K Δ'
 
     # 5. Resolve Formats
     assign format_val = card_product.metafields.custom.asset_format.value | default: card_product.metafields.custom.asset_format
@@ -88,7 +115,6 @@
         endif
       endfor
     endif
-    assign format_val = format_val | default: 'FBX / GLB'
 
     # 6. Resolve Engines
     assign engine_val = card_product.metafields.custom.engine_support.value | default: card_product.metafields.custom.engine_support
@@ -100,16 +126,15 @@
         endif
       endfor
     endif
-    assign engine_val = engine_val | default: 'UE5 / Unity'
 
     # 7. Resolve Textures
-    assign tex_val = card_product.metafields.custom.texture_resolution.value | default: card_product.metafields.custom.texture_resolution | default: '4K PBR'
+    assign tex_val = card_product.metafields.custom.texture_resolution.value | default: card_product.metafields.custom.texture_resolution
 
     assign card_id = 'pf-card-' | append: section_id | append: '-' | append: card_product.id
   -%}
 
   <div
-    class="pf-card"
+    class="pf-card{% if is_editorial_lead %} pf-card--lead{% endif %}"
     id="{{ card_id }}"
     data-product-id="{{ card_product.id }}"
     data-product-handle="{{ card_product.handle }}"
@@ -141,7 +166,7 @@
           height="375"
         >
       {%- else -%}
-        <div class="pf-card-poster" style="display: flex; align-items: center; justify-content: center; background: #13161c; width: 100%; height: 100%;">
+        <div class="pf-card-poster" style="display: flex; align-items: center; justify-content: center; background: var(--pf-bg-surface-subtle); color: var(--pf-text-secondary); width: 100%; height: 100%;">
           {{ 'image' | placeholder_svg_tag }}
         </div>
       {%- endif -%}
@@ -208,27 +233,35 @@
 
       <h3 class="pf-card-title">
         <a href="{{ card_product.url }}">
-          {{ card_product.title | escape }}
+          {{ card_title | escape }}
         </a>
       </h3>
 
-      <!-- Technical Spec Pills -->
-      <div class="pf-card-specs">
-        <span class="pf-spec-pill is-poly" title="Triangle Polycount">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 22 20 2 20 12 2"/>
-          </svg>
-          {{ poly_val }}
-        </span>
+      {%- if poly_val != blank or format_val != blank or engine_val != blank -%}
+        <!-- Technical Spec Pills -->
+        <div class="pf-card-specs">
+          {%- if poly_val != blank -%}
+            <span class="pf-spec-pill is-poly" title="Triangle Polycount">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 22 20 2 20 12 2"/>
+              </svg>
+              {{ poly_val }}
+            </span>
+          {%- endif -%}
 
-        <span class="pf-spec-pill is-format" title="Included Formats">
-          {{ format_val }}
-        </span>
+          {%- if format_val != blank -%}
+            <span class="pf-spec-pill is-format" title="Included Formats">
+              {{ format_val }}
+            </span>
+          {%- endif -%}
 
-        <span class="pf-spec-pill" title="Supported Game Engines">
-          {{ engine_val }}
-        </span>
-      </div>
+          {%- if engine_val != blank -%}
+            <span class="pf-spec-pill" title="Supported Game Engines">
+              {{ engine_val }}
+            </span>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
     </div>
   </div>
 {%- else -%}
@@ -239,14 +272,10 @@
     </div>
     <div class="pf-card-info">
       <div class="pf-card-meta-top">
-        <span class="pf-card-category">PROPS</span>
-        <span class="pf-card-price">$24.00</span>
+        <span class="pf-card-category">CATALOG SAMPLE</span>
+        <span class="pf-card-price">₱1,200.00</span>
       </div>
-      <h3 class="pf-card-title">Sample Sci-Fi Asset Pack</h3>
-      <div class="pf-card-specs">
-        <span class="pf-spec-pill is-poly">14.2K Δ</span>
-        <span class="pf-spec-pill is-format">FBX / GLB</span>
-      </div>
+      <h3 class="pf-card-title">Sample 3D Asset</h3>
     </div>
   </div>
 {%- endif -%}

@@ -1,6 +1,6 @@
 {% comment %}
   PlayForge Free Assets Section
-  Showcases free and $0 starter models for developers to test topology and pipeline integration.
+  Clean, straightforward showcase of free and starter models with real prices.
 {% endcomment %}
 
 {%- liquid
@@ -8,18 +8,18 @@
   assign limit_val = section.settings.products_to_show | default: 4
 -%}
 
-<div id="free-assets" class="pf-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+<div id="free-assets" class="pf-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px; border-top: 1px solid var(--pf-border-subtle);">
   <div class="pf-container">
     <div class="pf-section-header">
       <div class="pf-section-title-wrap">
-        <span class="pf-section-kicker" style="color: var(--pf-accent-secondary);">{{ section.settings.kicker | default: '$0 Starter Models' }}</span>
-        <h2 class="pf-section-title">{{ section.settings.heading | default: 'Free Developer Assets' }}</h2>
-        <p class="pf-section-subtitle">{{ section.settings.subheading | default: 'Test our quad topology, calibrated PBR shaders, and LOD hierarchies directly inside your game engine at zero cost.' }}</p>
+        <span class="pf-section-kicker">{{ section.settings.kicker | default: 'Starter Library' }}</span>
+        <h2 class="pf-section-title">{{ section.settings.heading | default: 'Free Assets' }}</h2>
+        <p class="pf-section-subtitle">{{ section.settings.subheading | default: 'Test topology, material response, and engine integration in your pipeline with no commitment.' }}</p>
       </div>
 
       {%- if section.settings.view_all_link != blank -%}
         <a href="{{ section.settings.view_all_link }}" class="button button--secondary">
-          {{ section.settings.view_all_label | default: 'View All Free' }}
+          {{ section.settings.view_all_label | default: 'Browse free assets' }}
         </a>
       {%- endif -%}
     </div>
@@ -75,50 +75,50 @@
     {
       "type": "text",
       "id": "kicker",
-      "label": "Kicker",
-      "default": "$0 Starter Models"
+      "label": "Kicker Note",
+      "default": "Starter Library"
     },
     {
       "type": "text",
       "id": "heading",
       "label": "Heading",
-      "default": "Free Developer Assets"
+      "default": "Free Assets"
     },
     {
       "type": "textarea",
       "id": "subheading",
       "label": "Subheading",
-      "default": "Test our quad topology, calibrated PBR shaders, and LOD hierarchies directly inside your game engine at zero cost."
+      "default": "Test topology, material response, and engine integration in your pipeline with no commitment."
     },
     {
       "type": "collection",
       "id": "collection",
-      "label": "Free Collection (Optional)"
+      "label": "Collection"
     },
     {
       "type": "range",
       "id": "products_to_show",
       "min": 2,
       "max": 8,
-      "step": 2,
+      "step": 1,
       "default": 4,
       "label": "Assets to Show"
     },
     {
       "type": "text",
       "id": "view_all_label",
-      "label": "Button Label",
-      "default": "Explore Free Library"
+      "label": "View All Action Label",
+      "default": "Browse free assets"
     },
     {
       "type": "url",
       "id": "view_all_link",
-      "label": "Button Link"
+      "label": "View All Link"
     },
     {
       "type": "range",
       "id": "padding_top",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",
@@ -128,7 +128,7 @@
     {
       "type": "range",
       "id": "padding_bottom",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",

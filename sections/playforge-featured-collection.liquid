@@ -1,6 +1,6 @@
 {% comment %}
   PlayForge Featured Collection Spotlight
-  Cinematic banner section showcasing signature game asset bundles such as "Post-Apocalyptic City".
+  Editorial presentation for an actual collection with large artwork and clear navigation.
 {% endcomment %}
 
 {%- liquid
@@ -11,65 +11,52 @@
   endif
 -%}
 
-<div class="pf-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+<div class="pf-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px; border-top: 1px solid var(--pf-border-subtle);">
   <div class="pf-container">
-    <div class="pf-feat-collection-box">
+    <div class="pf-feat-collection-split">
       <!-- Left Narrative Column -->
-      <div style="display: flex; flex-direction: column; gap: 20px;">
-        <span class="pf-section-kicker">{{ section.settings.kicker | default: 'Spotlight Environment Kit' }}</span>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <span class="pf-section-kicker">{{ section.settings.kicker | default: 'Featured Collection' }}</span>
         
-        <h2 class="pf-section-title" style="font-size: clamp(3rem, 4vw, 4.8rem);">
-          {{ section.settings.heading | default: 'Post-Apocalyptic City' }}
+        <h2 class="pf-section-title" style="font-size: clamp(2.6rem, 3.6vw, 4.2rem);">
+          {{ section.settings.heading | default: collection.title | default: 'Post-Apocalyptic City' }}
         </h2>
 
-        <p class="pf-section-subtitle" style="max-width: 520px; line-height: 1.6;">
-          {{ section.settings.description | default: 'Complete modular kit for overgrown urban dystopias. Includes collapsed highway spans, barricades, modular tenement facades, weathered props, and custom foliage shaders calibrated for Unreal Engine 5 and Unity HDRP.' }}
+        <p class="pf-section-subtitle" style="max-width: 500px; line-height: 1.6;">
+          {{ section.settings.description | default: collection.description | default: 'A comprehensive modular environment collection with clean topology, calibrated PBR shaders, and native engine prefabs.' }}
         </p>
 
-        <!-- Pack Spec Badges -->
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0;">
-          <div class="pf-spec-pill" style="padding: 6px 12px; font-size: 1.2rem;">
-            <strong>180+</strong> Modular Meshes
-          </div>
-          <div class="pf-spec-pill" style="padding: 6px 12px; font-size: 1.2rem;">
-            <strong>4K</strong> PBR Dirt & Rust
-          </div>
-          <div class="pf-spec-pill is-format" style="padding: 6px 12px; font-size: 1.2rem;">
-            LOD0 - LOD3 Included
-          </div>
-          <div class="pf-spec-pill" style="padding: 6px 12px; font-size: 1.2rem;">
-            UE5 Nanite & Lumen Ready
-          </div>
+        <!-- Technical Specification Details -->
+        <div class="pf-card-specs" style="margin: 4px 0 8px 0; border-top: none; padding-top: 0;">
+          <span class="pf-spec-pill is-poly">Unreal Engine 5 &amp; Unity Ready</span>
+          <span class="pf-spec-pill">Calibrated 4K PBR</span>
+          <span class="pf-spec-pill is-format">FBX / GLB / BLEND</span>
         </div>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 8px;">
           <a href="{{ section.settings.cta_link | default: collection.url | default: routes.all_products_collection_url }}" class="button button--primary">
-            {{ section.settings.cta_label | default: 'Explore Complete Kit' }}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
+            {{ section.settings.cta_label | default: 'Explore collection' }}
           </a>
 
-          {%- if collection != blank -%}
-            <span class="pf-stat-label" style="align-self: center;">
-              {{ collection.products_count }} assets in bundle
+          {%- if collection != blank and collection.products_count > 0 -%}
+            <span style="font-size: 1.35rem; color: var(--pf-text-secondary);">
+              {{ collection.products_count }} assets in collection
             </span>
           {%- endif -%}
         </div>
       </div>
 
       <!-- Right 3D Pack Viewport Column -->
-      <div class="pf-viewer-container" style="aspect-ratio: 1 / 1; min-height: 380px;">
+      <div class="pf-viewer-container" style="aspect-ratio: 16 / 11; min-height: 380px;">
         {%- assign feat_poster_url = section.settings.image | image_url: width: 800 -%}
         {% render '3d-viewer',
           model_url: feat_model,
           poster_url: feat_poster_url,
           alt: section.settings.heading,
           viewer_id: 'featured-collection',
-          aspect_ratio: '1 / 1',
+          aspect_ratio: '16 / 11',
           show_toolbar: true,
-          badge_text: 'KIT SPOTLIGHT'
+          badge_text: 'Interactive Kit'
         %}
       </div>
     </div>
@@ -85,52 +72,52 @@
     {
       "type": "text",
       "id": "kicker",
-      "label": "Kicker",
-      "default": "Spotlight Environment Kit"
+      "label": "Kicker Note",
+      "default": "Featured Collection"
     },
     {
       "type": "text",
       "id": "heading",
-      "label": "Collection Title",
+      "label": "Heading",
       "default": "Post-Apocalyptic City"
     },
     {
       "type": "textarea",
       "id": "description",
       "label": "Description",
-      "default": "Complete modular kit for overgrown urban dystopias. Includes collapsed highway spans, barricades, modular tenement facades, weathered props, and custom foliage shaders calibrated for Unreal Engine 5 and Unity HDRP."
+      "default": "A comprehensive modular environment collection with clean topology, calibrated PBR shaders, and native engine prefabs."
     },
     {
       "type": "collection",
       "id": "collection",
-      "label": "Linked Shopify Collection"
-    },
-    {
-      "type": "text",
-      "id": "model_url",
-      "label": "3D Preview Model GLB URL",
-      "default": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SciFiHelmet/glTF-Binary/SciFiHelmet.glb"
+      "label": "Collection"
     },
     {
       "type": "image_picker",
       "id": "image",
-      "label": "Poster Image"
+      "label": "Featured Artwork Image"
+    },
+    {
+      "type": "text",
+      "id": "model_url",
+      "label": "3D Model GLB URL",
+      "info": "Optional custom 3D model asset"
     },
     {
       "type": "text",
       "id": "cta_label",
-      "label": "CTA Button Label",
-      "default": "Explore Complete Kit"
+      "label": "Action Button Label",
+      "default": "Explore collection"
     },
     {
       "type": "url",
       "id": "cta_link",
-      "label": "CTA Button Link"
+      "label": "Action Button Link"
     },
     {
       "type": "range",
       "id": "padding_top",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",
@@ -140,7 +127,7 @@
     {
       "type": "range",
       "id": "padding_bottom",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",

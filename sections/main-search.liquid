@@ -136,7 +136,13 @@
           {%- endif -%}
         {%- endunless -%}
         {%- if search.results_count == 0 and search.filters == empty -%}
-          <p role="status">{{ 'templates.search.no_results' | t: terms: search.terms }}</p>
+          <div style="text-align: center; margin: 32px 0; color: var(--pf-text-secondary);">
+            <p style="font-size: 1.6rem; margin-bottom: 10px; color: var(--pf-heading-color);">No 3D assets found matching &ldquo;{{ search.terms | escape }}&rdquo;.</p>
+            <p style="font-size: 1.4rem; color: var(--pf-text-tertiary); max-width: 480px; margin: 0 auto 20px;">Try searching by asset discipline such as props, environment, modular kits, weapons, or vehicles.</p>
+            <a href="{{ routes.all_products_collection_url }}" class="button button--secondary">
+              Browse complete catalog
+            </a>
+          </div>
         {%- endif -%}
       {%- endif -%}
     </div>
@@ -194,14 +200,27 @@
           {%- endif -%}
         {%- endif -%}
         <div class="product-grid-container" id="ProductGridContainer">
-          {%- if search.results.size == 0 and search.filters != empty -%}
+          {%- if search.results.size == 0 -%}
             <div class="template-search__results collection collection--empty{% if section.settings.filter_type != 'vertical' %} page-width{% endif %}" id="product-grid" data-id="{{ section.id }}">
               <div class="loading-overlay gradient"></div>
-              <div class="title-wrapper center">
-                <h2 class="title title--primary">
-                  {{ 'sections.collection_template.empty' | t }}<br>
-                  {{ 'sections.collection_template.use_fewer_filters_html' | t: link: search_url, class: "underlined-link link" }}
+              <div class="title-wrapper center" style="padding: 48px 24px; max-width: 600px; margin: 0 auto;">
+                <span class="pf-section-kicker" style="display: block; margin-bottom: 8px;">Catalog Search</span>
+                <h2 class="title title--primary" style="font-size: 2.4rem; margin-bottom: 12px; color: var(--pf-heading-color);">
+                  No 3D assets found matching &ldquo;{{ search.terms | escape }}&rdquo;
                 </h2>
+                <p style="font-size: 1.45rem; color: var(--pf-text-secondary); line-height: 1.6; margin-bottom: 24px;">
+                  Try adjusting keywords by category (e.g., Environment, Props, Characters, Modular Kits), clearing active filters, or exploring our complete catalog.
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                  <a href="{{ routes.all_products_collection_url }}" class="button button--primary">
+                    Explore all assets
+                  </a>
+                  {%- if search.filters != empty -%}
+                    <a href="{{ search_url }}" class="button button--secondary">
+                      Clear Active Filters
+                    </a>
+                  {%- endif -%}
+                </div>
               </div>
             </div>
           {%- else -%}

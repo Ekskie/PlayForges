@@ -4,7 +4,6 @@
   data-section="{{ section.id }}"
 >
   {{ 'section-main-product.css' | asset_url | stylesheet_tag }}
-  {{ 'component-accordion.css' | asset_url | stylesheet_tag }}
   {{ 'component-price.css' | asset_url | stylesheet_tag }}
   {{ 'component-slider.css' | asset_url | stylesheet_tag }}
   {{ 'component-rating.css' | asset_url | stylesheet_tag }}
@@ -58,21 +57,45 @@
   <div class="product product--{{ section.settings.media_size }} product--{{ section.settings.media_position }} product--{{ section.settings.gallery_layout }} product--mobile-{{ section.settings.mobile_thumbnails }} grid grid--1-col {% if product.media.size > 0 %}grid--2-col-tablet{% else %}product--no-media{% endif %}">
     <div class="grid__item product__media-wrapper{% if section.settings.media_position == 'right' %} medium-hide large-up-hide{% endif %}">
       {%- liquid
-        assign pdp_model = product.metafields.custom.model_3d.value | default: product.metafields.custom.model_3d
+        assign pdp_model = blank
+
+        # 1. Native Shopify 3D Product Media (live Shopify CDN)
+        for media in product.media
+          if media.media_type == 'model'
+            for source in media.sources
+              if source.format == 'glb' or source.format == 'gltf'
+                assign pdp_model = source.url
+                break
+              endif
+            endfor
+          endif
+          if pdp_model != blank
+            break
+          endif
+        endfor
+
+        # 2. Check local theme model registry snippet
         if pdp_model == blank
-          for media in product.media
-            if media.media_type == 'model'
-              for source in media.sources
-                if source.format == 'glb' or source.format == 'gltf'
-                  assign pdp_model = source.url
-                  break
-                endif
-              endfor
+          capture registry_model
+            render 'playforge-model-registry', product: product, field: 'model'
+          endcapture
+          assign registry_model = registry_model | strip
+          if registry_model != blank
+            assign pdp_model = registry_model
+          endif
+        endif
+
+        # 3. Check custom.model_3d metafield (if it's a valid live CDN URL)
+        if pdp_model == blank
+          assign meta_model = product.metafields.custom.model_3d.value | default: product.metafields.custom.model_3d
+          if meta_model != blank
+            assign meta_str = meta_model | strip
+            if meta_str contains 'cdn.shopify.com' or meta_str contains 'http'
+              unless meta_str contains 'playforges-kkii5nq8.myshopify.com/assets/'
+                assign pdp_model = meta_str
+              endunless
             endif
-            if pdp_model != blank
-              break
-            endif
-          endfor
+          endif
         endif
         if pdp_model == blank
           assign modulo_val = product.id | modulo: 3
@@ -89,21 +112,152 @@
 
       {%- if pdp_model != blank -%}
         {%- assign pdp_poster_url = product.featured_media | image_url: width: 1200 -%}
-        <div style="margin-bottom: 24px;">
-          {% render '3d-viewer',
-            model_url: pdp_model,
-            poster_url: pdp_poster_url,
-            alt: product.title,
-            viewer_id: product.id,
-            aspect_ratio: '4 / 3',
-            show_toolbar: true,
-            allow_fullscreen: true,
-            badge_text: '3D ASSET INSPECTOR'
-          %}
-        </div>
-      {%- endif -%}
+        
+        <div class="pf-pdp-media-suite" style="margin-bottom: 24px;">
+          <!-- Primary Viewport Card -->
+          <div class="pf-pdp-viewport-card" style="position: relative; border-radius: 12px; overflow: hidden; background: radial-gradient(circle at 50% 50%, #1a1b24 0%, #0c0d12 100%); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);">
+            
+            <!-- 1. 3D WebGL Turntable Viewport -->
+            <div id="pf-pdp-3d-viewport" style="display: block; width: 100%;">
+              {% render '3d-viewer',
+                model_url: pdp_model,
+                poster_url: pdp_poster_url,
+                alt: product.title,
+                viewer_id: product.id,
+                aspect_ratio: '4 / 3',
+                show_toolbar: true,
+                allow_fullscreen: true,
+                badge_text: '3D ASSET INSPECTOR'
+              %}
+            </div>
 
-      {% render 'product-media-gallery', variant_images: variant_images %}
+            <!-- 2. High-Res Photo Viewport (Render Looks) -->
+            <div id="pf-pdp-photo-viewport" style="display: none; width: 100%; aspect-ratio: 4 / 3; position: relative; background: #08090c; align-items: center; justify-content: center; overflow: hidden;">
+              <img
+                id="pf-pdp-active-render-img"
+                src=""
+                alt="Render Look"
+                style="width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.25s ease;"
+                onclick="this.style.transform = (this.style.transform === 'scale(1.6)' ? 'scale(1)' : 'scale(1.6)');"
+              />
+              
+              <div class="pf-viewer-badge" style="position: absolute; top: 14px; left: 14px; z-index: 10; background: rgba(14, 15, 22, 0.88); backdrop-filter: blur(8px); border: 1px solid rgba(255, 90, 31, 0.5); padding: 5px 12px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                <span id="pf-pdp-render-badge-text" style="color: #FF5A1F; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">STUDIO RENDER LOOK</span>
+              </div>
+
+              <div style="position: absolute; bottom: 12px; right: 14px; z-index: 10; font-size: 0.72rem; color: #94a3b8; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);">
+                Click photo to toggle 1.6x inspection zoom
+              </div>
+            </div>
+          </div>
+
+          <!-- Media Thumbnails Switcher Strip -->
+          <div class="pf-media-thumbs-container" style="margin-top: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #FF5A1F;"></span>
+                Media Gallery &bull; Interactive 3D &amp; Render Looks
+              </span>
+              <span style="font-size: 0.7rem; color: #64748b;">
+                Click any thumbnail to inspect
+              </span>
+            </div>
+
+            <div class="pf-media-thumbs-strip" style="display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px 2px; scrollbar-width: thin;">
+              <!-- 3D Model Thumbnail -->
+              <button
+                type="button"
+                id="pf-thumb-btn-3d"
+                class="pf-thumb-btn is-active"
+                onclick="window.switchPdpMediaView('3d')"
+                title="Inspect 3D WebGL Model"
+                style="position: relative; width: 78px; height: 78px; min-width: 78px; border-radius: 8px; background: #14151e; border: 2px solid #FF5A1F; cursor: pointer; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 0 12px rgba(255, 90, 31, 0.4); transition: all 0.2s ease;"
+              >
+                <div style="background: rgba(255, 90, 31, 0.15); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FF5A1F;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                  </svg>
+                </div>
+                <span style="font-size: 0.65rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.04em;">3D Orbit</span>
+                <span style="position: absolute; top: 4px; right: 4px; background: #FF5A1F; color: #fff; font-size: 0.55rem; font-weight: 800; padding: 1px 4px; border-radius: 3px;">3D</span>
+              </button>
+
+              <!-- Product Images / Render Looks -->
+              {%- for image in product.images -%}
+                {%- assign img_alt = image.alt | default: 'Render Look' -%}
+                <button
+                  type="button"
+                  id="pf-thumb-btn-img-{{ forloop.index }}"
+                  class="pf-thumb-btn"
+                  onclick="window.switchPdpMediaView('photo', '{{ image | image_url: width: 1400 }}', '{{ img_alt | escape }}', this)"
+                  title="{{ img_alt | escape }}"
+                  style="position: relative; width: 78px; height: 78px; min-width: 78px; border-radius: 8px; background: #14151e; border: 1px solid rgba(255, 255, 255, 0.15); cursor: pointer; padding: 3px; overflow: hidden; transition: all 0.2s ease;"
+                >
+                  <img
+                    src="{{ image | image_url: width: 160, height: 160, crop: 'center' }}"
+                    alt="{{ img_alt | escape }}"
+                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"
+                    loading="lazy"
+                  />
+                  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 70%, transparent 100%); font-size: 0.58rem; color: #fff; font-weight: 600; padding: 3px 2px 2px 2px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ img_alt | truncate: 12 }}
+                  </div>
+                </button>
+              {%- endfor -%}
+            </div>
+          </div>
+
+          <script>
+            window.switchPdpMediaView = function(type, url, label, btnElement) {
+              var view3d = document.getElementById('pf-pdp-3d-viewport');
+              var viewPhoto = document.getElementById('pf-pdp-photo-viewport');
+              var photoImg = document.getElementById('pf-pdp-active-render-img');
+              var badgeText = document.getElementById('pf-pdp-render-badge-text');
+              var allButtons = document.querySelectorAll('.pf-thumb-btn');
+
+              allButtons.forEach(function(b) {
+                b.classList.remove('is-active');
+                b.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+                b.style.boxShadow = 'none';
+              });
+
+              if (type === '3d') {
+                if (viewPhoto) viewPhoto.style.display = 'none';
+                if (view3d) view3d.style.display = 'block';
+                var btn3d = document.getElementById('pf-thumb-btn-3d');
+                if (btn3d) {
+                  btn3d.classList.add('is-active');
+                  btn3d.style.border = '2px solid #FF5A1F';
+                  btn3d.style.boxShadow = '0 0 12px rgba(255, 90, 31, 0.4)';
+                }
+              } else {
+                if (view3d) view3d.style.display = 'none';
+                if (viewPhoto) {
+                  viewPhoto.style.display = 'flex';
+                  if (photoImg) {
+                    photoImg.style.transform = 'scale(1)';
+                    photoImg.src = url;
+                    photoImg.alt = label || 'Render Look';
+                  }
+                  if (badgeText) {
+                    badgeText.textContent = (label || 'STUDIO RENDER LOOK').toUpperCase();
+                  }
+                }
+                var targetBtn = btnElement || document.getElementById('pf-thumb-btn-img-1');
+                if (targetBtn) {
+                  targetBtn.classList.add('is-active');
+                  targetBtn.style.border = '2px solid #FF5A1F';
+                  targetBtn.style.boxShadow = '0 0 12px rgba(255, 90, 31, 0.4)';
+                }
+              }
+            };
+          </script>
+        </div>
+      {%- else -%}
+        {% render 'product-media-gallery', variant_images: variant_images %}
+      {%- endif -%}
     </div>
     <div class="product__info-wrapper grid__item{% if settings.page_width > 1400 and section.settings.media_size == "small" %} product__info-wrapper--extra-padding{% endif %}">
       <product-info
@@ -126,24 +280,63 @@
                 {{- block.settings.text -}}
               </p>
             {%- when 'title' -%}
+              {%- liquid
+                capture reg_title
+                  render 'playforge-model-registry', product: product, field: 'title'
+                endcapture
+                assign reg_title = reg_title | strip
+                if reg_title != blank
+                  assign resolved_pdp_title = reg_title
+                else
+                  assign resolved_pdp_title = product.title
+                endif
+
+                capture reg_cat
+                  render 'playforge-model-registry', product: product, field: 'category'
+                endcapture
+                assign reg_cat = reg_cat | strip
+                if reg_cat != blank
+                  assign resolved_pdp_cat = reg_cat
+                elsif product.type != blank
+                  assign resolved_pdp_cat = product.type
+                else
+                  assign resolved_pdp_cat = 'Game Assets'
+                endif
+              -%}
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                <span class="pf-card-category">{{ product.type | default: '3D GAME ASSET' }}</span>
-                <span class="pf-spec-pill is-format">COMMERCIAL LICENSE</span>
+                <span class="pf-card-category">{{ resolved_pdp_cat }}</span>
+                <span class="pf-spec-pill is-format">Commercial License</span>
               </div>
               <div class="product__title" {{ block.shopify_attributes }}>
-                <h1>{{ product.title | escape }}</h1>
+                <h1>{{ resolved_pdp_title | escape }}</h1>
                 <a href="{{ product.url }}" class="product__title">
                   <h2 class="h1">
-                    {{ product.title | escape }}
+                    {{ resolved_pdp_title | escape }}
                   </h2>
                 </a>
               </div>
-              <div class="pf-card-specs" style="margin-top: 10px; margin-bottom: 16px;">
-                <span class="pf-spec-pill is-poly">{{ product.metafields.custom.polycount.value | default: '18.4K Δ' }}</span>
-                <span class="pf-spec-pill is-format">{{ product.metafields.custom.asset_format.value | default: 'FBX / GLB / OBJ' }}</span>
-                <span class="pf-spec-pill">{{ product.metafields.custom.engine_support.value | default: 'UE5 / Unity / Godot' }}</span>
-                <span class="pf-spec-pill">{{ product.metafields.custom.texture_resolution.value | default: '4K PBR' }}</span>
-              </div>
+              {%- liquid
+                assign prod_poly = product.metafields.custom.polycount.value | default: product.metafields.custom.polycount
+                assign prod_format = product.metafields.custom.asset_format.value | default: product.metafields.custom.asset_format
+                assign prod_engine = product.metafields.custom.engine_support.value | default: product.metafields.custom.engine_support
+                assign prod_tex = product.metafields.custom.texture_resolution.value | default: product.metafields.custom.texture_resolution
+              -%}
+              {%- if prod_poly != blank or prod_format != blank or prod_engine != blank or prod_tex != blank -%}
+                <div class="pf-card-specs" style="margin-top: 10px; margin-bottom: 16px;">
+                  {%- if prod_poly != blank -%}
+                    <span class="pf-spec-pill is-poly">{{ prod_poly }}</span>
+                  {%- endif -%}
+                  {%- if prod_format != blank -%}
+                    <span class="pf-spec-pill is-format">{{ prod_format }}</span>
+                  {%- endif -%}
+                  {%- if prod_engine != blank -%}
+                    <span class="pf-spec-pill">{{ prod_engine }}</span>
+                  {%- endif -%}
+                  {%- if prod_tex != blank -%}
+                    <span class="pf-spec-pill">{{ prod_tex }}</span>
+                  {%- endif -%}
+                </div>
+              {%- endif -%}
             {%- when 'price' -%}
               <div class="no-js-hidden" id="price-{{ section.id }}" role="status" {{ block.shopify_attributes }}>
                 {%- render 'price',
@@ -491,6 +684,7 @@
               %}
           {%- endcase -%}
         {%- endfor -%}
+        {% render 'playforge-specs-table', product: product %}
         <a href="{{ product.url }}" class="link product__view-details animate-arrow">
           {{ 'products.product.view_full_details' | t }}
           {% render 'icon-arrow' %}
@@ -505,40 +699,47 @@
     {%- endif -%}
   </div>
 
-  <!-- PlayForge Technical Specifications & Pipeline Details -->
-  <div class="page-width" style="margin-top: 48px;">
-    {% render 'playforge-specs-table', product: product %}
-
-    <div class="pf-specs-table-wrap" style="margin-top: 24px;">
-      <div class="pf-specs-header">
-        <h3>Pipeline Integration & What's Included</h3>
-        <span class="pf-spec-pill is-format">PRODUCTION READY</span>
+  <!-- PlayForge Production Pipeline Integration & Standards -->
+  <div class="pf-container" style="margin-top: 64px; border-top: 1px solid var(--pf-border); padding-top: 48px;">
+    <div class="pf-section-header" style="margin-bottom: 32px;">
+      <div class="pf-section-title-wrap">
+        <span class="pf-section-kicker">Technical Specifications</span>
+        <h2 class="pf-section-title" style="font-size: 2.6rem;">Pipeline Integration & Deliverables</h2>
       </div>
-      <div style="padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-        <div>
-          <h4 style="font-family: var(--pf-font-mono); font-size: 1.4rem; color: var(--pf-accent); margin: 0 0 8px 0;">
-            [1] Mesh Hierarchy & LODs
-          </h4>
-          <p style="font-size: 1.35rem; color: var(--pf-text-secondary); line-height: 1.6; margin: 0;">
-            Includes high-poly source mesh, low-poly game model with LOD0 (100%), LOD1 (50%), LOD2 (25%), and LOD3 (10%). All pivots are centered to the origin base with rotation transforms frozen at (0,0,0).
-          </p>
-        </div>
-        <div>
-          <h4 style="font-family: var(--pf-font-mono); font-size: 1.4rem; color: var(--pf-accent); margin: 0 0 8px 0;">
-            [2] Texture Sets & Channels
-          </h4>
-          <p style="font-size: 1.35rem; color: var(--pf-text-secondary); line-height: 1.6; margin: 0;">
-            Includes 8-bit BaseColor (sRGB), 16-bit Normal (DirectX & OpenGL included), and 8-bit linear packed Roughness/Metallic/AO channels. 4096x4096 resolution with clean texel density across seams.
-          </p>
-        </div>
-        <div>
-          <h4 style="font-family: var(--pf-font-mono); font-size: 1.4rem; color: var(--pf-accent); margin: 0 0 8px 0;">
-            [3] Commercial License Terms
-          </h4>
-          <p style="font-size: 1.35rem; color: var(--pf-text-secondary); line-height: 1.6; margin: 0;">
-            Granted for unlimited commercial and non-commercial game titles, virtual reality experiences, architectural visualizations, and media productions. No recurring royalties.
-          </p>
-        </div>
+      <span class="pf-spec-pill is-format">Verified Asset Standard</span>
+    </div>
+
+    <div class="pf-pipeline-grid">
+      <div class="pf-pipeline-col">
+        <span class="pf-pipeline-index">01</span>
+        <h3 class="pf-pipeline-title">Mesh Hierarchy & LODs</h3>
+        <p class="pf-pipeline-desc">
+          Clean quad/tri geometry with LOD0 through LOD3 included. Pivot point calibrated to model ground base at origin (0,0,0) with frozen scale transforms.
+        </p>
+      </div>
+
+      <div class="pf-pipeline-col">
+        <span class="pf-pipeline-index">02</span>
+        <h3 class="pf-pipeline-title">PBR Texture Sets</h3>
+        <p class="pf-pipeline-desc">
+          Calibrated 4K textures including sRGB Albedo, 16-bit DirectX and OpenGL Normals, plus linear-packed Roughness, Metallic, and Ambient Occlusion channels.
+        </p>
+      </div>
+
+      <div class="pf-pipeline-col">
+        <span class="pf-pipeline-index">03</span>
+        <h3 class="pf-pipeline-title">Universal Engine Support</h3>
+        <p class="pf-pipeline-desc">
+          Pre-tested for drag-and-drop import into Unreal Engine 5 (Nanite and Lumen ready), Unity URP and HDRP, Godot 4, and standard Blender DCC workflows.
+        </p>
+      </div>
+
+      <div class="pf-pipeline-col">
+        <span class="pf-pipeline-index">04</span>
+        <h3 class="pf-pipeline-title">Commercial Studio License</h3>
+        <p class="pf-pipeline-desc">
+          Perpetual royalty-free usage across commercial game titles, interactive real-time applications, virtual production, and cinematics.
+        </p>
       </div>
     </div>
   </div>

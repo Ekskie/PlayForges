@@ -1,80 +1,58 @@
 {% comment %}
-  PlayForge 3D Hero Showcase Section
-  Split layout featuring punchy game-dev statement, metrics counter, and large interactive 3D hero model viewport.
+  PlayForge Editorial Hero Showcase
+  Clean editorial composition pairing a strong statement with a dominant 3D studio viewport.
+  No fake credibility statistics or sci-fi decorations.
 {% endcomment %}
 
-<div class="pf-section pf-hero-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+<div class="pf-hero-section" style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
   <div class="pf-container">
     <div class="pf-hero-split">
-      <!-- Left Content Column -->
+      <!-- Left Content Column: Editorial Typography -->
       <div class="pf-hero-content">
-        <div class="pf-hero-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-          <span>{{ section.settings.badge_text | default: 'Next-Gen Game Assets' }}</span>
-        </div>
+        {%- if section.settings.kicker != blank -%}
+          <div class="pf-hero-kicker">{{ section.settings.kicker }}</div>
+        {%- endif -%}
 
         <h1 class="pf-hero-title">
-          {{ section.settings.heading | default: 'Build worlds <span>faster.</span>' }}
+          {{ section.settings.heading | default: 'Build your world. One asset at a time.' }}
         </h1>
 
         <p class="pf-hero-desc">
-          {{ section.settings.subheading | default: 'PlayForge provides production-ready 3D assets for indie game developers, environment artists, and studios. Clean topology, calibrated 4K PBR, and native engine prefabs.' }}
+          {{ section.settings.subheading | default: 'Production-ready 3D components with clean quad topology, calibrated PBR, and native engine prefabs for Unreal Engine and Unity.' }}
         </p>
 
         <div class="pf-hero-actions">
           <a href="{{ section.settings.primary_cta_link | default: routes.all_products_collection_url }}" class="button button--primary">
-            {{ section.settings.primary_cta_label | default: 'Browse Assets' }}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
+            {{ section.settings.primary_cta_label | default: 'Browse assets' }}
           </a>
 
           {%- if section.settings.secondary_cta_label != blank -%}
-            <a href="{{ section.settings.secondary_cta_link | default: '#free-assets' }}" class="button button--secondary">
+            <a href="{{ section.settings.secondary_cta_link | default: routes.all_products_collection_url }}" class="button button--secondary">
               {{ section.settings.secondary_cta_label }}
             </a>
           {%- endif -%}
         </div>
-
-        <!-- Live Technical Stats Row -->
-        <div class="pf-hero-stats">
-          <div class="pf-stat-item">
-            <span class="pf-stat-val">{{ section.settings.stat_1_val | default: '12,000+' }}</span>
-            <span class="pf-stat-label">{{ section.settings.stat_1_label | default: 'Verified Meshes' }}</span>
-          </div>
-
-          <div class="pf-stat-item">
-            <span class="pf-stat-val">{{ section.settings.stat_2_val | default: '100%' }}</span>
-            <span class="pf-stat-label">{{ section.settings.stat_2_label | default: '4K PBR Calibrated' }}</span>
-          </div>
-
-          <div class="pf-stat-item">
-            <span class="pf-stat-val">{{ section.settings.stat_3_val | default: 'UE5 & Unity' }}</span>
-            <span class="pf-stat-label">{{ section.settings.stat_3_label | default: 'Native Prefabs' }}</span>
-          </div>
-        </div>
       </div>
 
-      <!-- Right 3D Hero Viewport Column -->
+      <!-- Right 3D Studio Viewport: Dominant Asset Showcase -->
       <div class="pf-hero-viewport-wrap pf-viewer-container">
         {%- assign hero_model_url = section.settings.model_url -%}
         {%- if hero_model_url == blank or hero_model_url contains 'KhronosGroup' -%}
           {%- assign hero_model_url = 'pf-model-helmet.glb' | asset_url -%}
         {%- endif -%}
-        {%- assign hero_poster_url = section.settings.poster_image | image_url: width: 1000 -%}
+        {%- assign hero_poster_url = section.settings.poster_image | image_url: width: 1200 -%}
 
         {% render '3d-viewer',
           model_url: hero_model_url,
           poster_url: hero_poster_url,
-          alt: 'PlayForge Hero 3D Asset',
+          alt: 'PlayForge Studio 3D Asset',
           viewer_id: 'hero',
-          aspect_ratio: '1 / 1',
-          show_toolbar: true,
-          allow_fullscreen: true,
-          badge_text: 'INTERACTIVE HERO 3D',
+          aspect_ratio: '16 / 11',
+          show_toolbar: false,
+          show_badge: false,
+          allow_fullscreen: false,
+          shadow_intensity: '0.7',
+          exposure: '1.05',
           is_hero: true
         %}
       </div>
@@ -84,106 +62,65 @@
 
 {% schema %}
 {
-  "name": "3D Hero Showcase",
+  "name": "Editorial Hero Showcase",
   "tag": "section",
   "class": "pf-hero-showcase-section",
   "settings": [
     {
       "type": "text",
-      "id": "badge_text",
-      "label": "Top Badge Label",
-      "default": "Next-Gen Game Assets"
+      "id": "kicker",
+      "label": "Kicker Note",
+      "default": "Independent 3D Studio Catalog"
     },
     {
       "type": "text",
       "id": "heading",
       "label": "Main Heading",
-      "default": "Build worlds <span>faster.</span>"
+      "default": "Build your world. One asset at a time."
     },
     {
       "type": "textarea",
       "id": "subheading",
       "label": "Subheading",
-      "default": "PlayForge provides production-ready 3D assets for indie game developers, environment artists, and studios. Clean topology, calibrated 4K PBR, and native engine prefabs."
+      "default": "Production-ready 3D components with clean quad topology, calibrated PBR, and native engine prefabs for Unreal Engine and Unity."
     },
     {
       "type": "text",
       "id": "primary_cta_label",
-      "label": "Primary CTA Label",
-      "default": "Browse Assets"
+      "label": "Primary Action Label",
+      "default": "Browse assets"
     },
     {
       "type": "url",
       "id": "primary_cta_link",
-      "label": "Primary CTA Link"
+      "label": "Primary Action Link"
     },
     {
       "type": "text",
       "id": "secondary_cta_label",
-      "label": "Secondary CTA Label",
-      "default": "Explore Free Assets"
+      "label": "Secondary Action Label",
+      "default": "Free assets"
     },
     {
       "type": "url",
       "id": "secondary_cta_link",
-      "label": "Secondary CTA Link"
+      "label": "Secondary Action Link"
     },
     {
       "type": "text",
       "id": "model_url",
       "label": "Hero 3D Model GLB URL",
-      "default": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb",
-      "info": "Direct link to a .glb or .gltf 3D model asset"
+      "info": "Optional custom GLB model URL"
     },
     {
       "type": "image_picker",
       "id": "poster_image",
-      "label": "Hero Model Poster Image"
-    },
-    {
-      "type": "header",
-      "content": "Metric Counters"
-    },
-    {
-      "type": "text",
-      "id": "stat_1_val",
-      "label": "Stat 1 Value",
-      "default": "12,000+"
-    },
-    {
-      "type": "text",
-      "id": "stat_1_label",
-      "label": "Stat 1 Label",
-      "default": "Verified Meshes"
-    },
-    {
-      "type": "text",
-      "id": "stat_2_val",
-      "label": "Stat 2 Value",
-      "default": "100%"
-    },
-    {
-      "type": "text",
-      "id": "stat_2_label",
-      "label": "Stat 2 Label",
-      "default": "4K PBR Calibrated"
-    },
-    {
-      "type": "text",
-      "id": "stat_3_val",
-      "label": "Stat 3 Value",
-      "default": "UE5 & Unity"
-    },
-    {
-      "type": "text",
-      "id": "stat_3_label",
-      "label": "Stat 3 Label",
-      "default": "Native Prefabs"
+      "label": "Fallback Poster Image"
     },
     {
       "type": "range",
       "id": "padding_top",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",
@@ -193,7 +130,7 @@
     {
       "type": "range",
       "id": "padding_bottom",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",
@@ -203,7 +140,7 @@
   ],
   "presets": [
     {
-      "name": "3D Hero Showcase"
+      "name": "Editorial Hero Showcase"
     }
   ]
 }

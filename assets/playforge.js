@@ -17,15 +17,24 @@
   let hoverTimeout = null;
 
   // Initialize once DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
+  function initAll() {
+    initThemeSwitcher();
     initProductCardNavigation();
     initProductCardPreviews();
     initQuickViewModal();
     initViewportControls();
+    initModelViewerLoaders();
     initWishlist();
     initViewSwitcher();
     initCartRecommendations();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
+  }
+  document.addEventListener('shopify:section:load', initAll);
 
   /* ==========================================================================
      0. PRODUCT CARD CLICK-THROUGH NAVIGATION (Standard Website Experience)
@@ -189,22 +198,40 @@
         }
       };
 
-      // 1. INSTANT HOVER DETECTION (0ms delay) -> Switch 2D to 3D across entire card
-      card.addEventListener('mouseenter', (e) => {
-        cachedRect = card.getBoundingClientRect();
-        card.classList.add('is-hovered');
-        if (isModelLoaded) {
-          card.classList.add('has-3d-ready');
-          wrap.classList.add('is-ready');
-        }
-        updateRotation(e);
+      let hoverTimer = null;
+
+      modelViewer?.addEventListener('error', () => {
+        isModelLoaded = false;
+        card.classList.remove('has-3d-ready');
+        wrap.classList.remove('is-ready');
       });
 
-      // 2. Cursor movement across ANY part of the card steers 360-degree rotation smoothly
-      card.addEventListener('mousemove', updateRotation);
+      // 1. INTENTIONAL HOVER DELAY (220ms) -> Prevents heavy 3D loads on accidental mouse travel
+      card.addEventListener('mouseenter', (e) => {
+        cachedRect = card.getBoundingClientRect();
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(() => {
+          mountViewer();
+          card.classList.add('is-hovered');
+          if (isModelLoaded) {
+            card.classList.add('has-3d-ready');
+            wrap.classList.add('is-ready');
+          }
+          updateRotation(e);
+        }, 220);
+      });
 
-      // 3. UNHIGHLIGHT: Instant removal back to 2D image
+      // 2. Cursor movement across card steers rotation smoothly
+      card.addEventListener('mousemove', (e) => {
+        if (card.classList.contains('is-hovered')) {
+          updateRotation(e);
+        }
+      });
+
+      // 3. UNHIGHLIGHT: Return to calm idle position and restore 2D poster
       card.addEventListener('mouseleave', () => {
+        clearTimeout(hoverTimer);
+        hoverTimer = null;
         cachedRect = null;
         if (rAFId) {
           cancelAnimationFrame(rAFId);
@@ -239,9 +266,12 @@
   function initQuickViewModal() {
     const modal = document.getElementById('pf-quickview-modal');
     if (!modal) return;
+    if (modal._pfInitialized) return;
+    modal._pfInitialized = true;
 
     const closeBtn = modal.querySelector('[data-pf-close-modal]');
     const qvModel = document.getElementById('pf-quickview-model');
+    const qvLoader = document.getElementById('pf-quickview-loader') || modal.querySelector('.pf-viewer-loader');
     const qvTitle = document.getElementById('pf-qv-title');
     const qvPrice = document.getElementById('pf-qv-price');
     const qvCat = document.getElementById('pf-qv-category');
@@ -253,6 +283,50 @@
     const qvFullLink = document.getElementById('pf-qv-full-link');
     const qvForm = document.getElementById('pf-qv-form');
     const qvSubmitBtn = document.getElementById('pf-qv-submit-btn');
+
+    let loadWatchdog = null;
+
+    const showLoader = () => {
+      if (qvLoader) {
+        qvLoader.classList.remove('is-hidden');
+        qvLoader.style.display = 'flex';
+        qvLoader.style.opacity = '1';
+        qvLoader.style.visibility = 'visible';
+      }
+    };
+
+    const hideLoader = () => {
+      if (loadWatchdog) {
+        clearTimeout(loadWatchdog);
+        loadWatchdog = null;
+      }
+      if (qvLoader) {
+        qvLoader.classList.add('is-hidden');
+        qvLoader.style.opacity = '0';
+        qvLoader.style.visibility = 'hidden';
+        qvLoader.style.display = 'none';
+      }
+    };
+
+    // Attach listeners on qvModel to immediately dismiss loader when rendered
+    if (qvModel) {
+      qvModel.addEventListener('load', () => {
+        hideLoader();
+      });
+      qvModel.addEventListener('error', () => {
+        hideLoader();
+      });
+      qvModel.addEventListener('model-visibility', (e) => {
+        if (e.detail && e.detail.visible) {
+          hideLoader();
+        }
+      });
+      qvModel.addEventListener('progress', (e) => {
+        if (e.detail && e.detail.totalProgress >= 1) {
+          setTimeout(hideLoader, 100);
+        }
+      });
+    }
 
     // Open Quick View
     document.addEventListener('click', (e) => {
@@ -267,11 +341,30 @@
       // Populate Data
       if (qvTitle) qvTitle.textContent = card.dataset.title || '';
       if (qvPrice) qvPrice.textContent = card.dataset.price || '';
-      if (qvCat) qvCat.textContent = card.dataset.category || 'ASSET';
-      if (qvPoly) qvPoly.textContent = card.dataset.poly || '18.4K Δ';
-      if (qvFormat) qvFormat.textContent = card.dataset.format || 'FBX / GLB';
-      if (qvEngine) qvEngine.textContent = card.dataset.engine || 'UE5 / Unity';
-      if (qvTex) qvTex.textContent = card.dataset.tex || '4K PBR';
+      if (qvCat) qvCat.textContent = card.dataset.category || 'Asset';
+
+      const updateSpec = (el, val) => {
+        if (!el) return;
+        const parentCell = el.closest('.pf-spec-cell');
+        if (val && val.trim() !== '') {
+          el.textContent = val;
+          if (parentCell) parentCell.style.display = '';
+        } else {
+          if (parentCell) parentCell.style.display = 'none';
+        }
+      };
+
+      updateSpec(qvPoly, card.dataset.poly);
+      updateSpec(qvFormat, card.dataset.format);
+      updateSpec(qvEngine, card.dataset.engine);
+      updateSpec(qvTex, card.dataset.tex);
+
+      const specsWrap = modal.querySelector('.pf-specs-table-wrap');
+      if (specsWrap) {
+        const hasSpecs = [card.dataset.poly, card.dataset.format, card.dataset.engine, card.dataset.tex].some(v => v && v.trim() !== '');
+        specsWrap.style.display = hasSpecs ? '' : 'none';
+      }
+
       if (qvVariantId) qvVariantId.value = card.dataset.variantId || '';
       if (qvFullLink) qvFullLink.href = card.dataset.productUrl || '#';
 
@@ -280,13 +373,27 @@
         const modelUrl = card.dataset.modelUrl;
         const posterUrl = card.dataset.posterUrl;
         if (modelUrl) {
-          qvModel.src = modelUrl;
-          if (posterUrl) qvModel.poster = posterUrl;
           qvModel.style.display = 'block';
+
+          // Check if already loaded with exact same model
+          if (qvModel.src === modelUrl && qvModel.loaded) {
+            hideLoader();
+          } else {
+            showLoader();
+            qvModel.src = modelUrl;
+            if (posterUrl) qvModel.poster = posterUrl;
+
+            // Failsafe watchdog timer: ensure loader disappears if model already cached or quick rendered
+            if (loadWatchdog) clearTimeout(loadWatchdog);
+            loadWatchdog = setTimeout(hideLoader, 2000);
+          }
         } else {
           qvModel.src = '';
           qvModel.style.display = 'none';
+          hideLoader();
         }
+      } else {
+        hideLoader();
       }
 
       // Open Modal
@@ -300,6 +407,7 @@
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      hideLoader();
       if (qvModel) {
         qvModel.src = ''; // Clean up memory
       }
@@ -406,6 +514,44 @@
           break;
       }
     });
+  }
+
+  /* ==========================================================================
+     3.1 GLOBAL 3D MODEL-VIEWER LOADER DISMISSAL
+     ========================================================================== */
+  function initModelViewerLoaders() {
+    const bindLoader = (mv) => {
+      if (mv._pfLoaderBound) return;
+      mv._pfLoaderBound = true;
+
+      const container = mv.closest('.pf-viewer-container, .pf-quickview-viewport, .pf-hero-viewport-wrap') || mv.parentElement;
+      const loader = container ? container.querySelector('.pf-viewer-loader') : mv.querySelector('.pf-viewer-loader');
+      if (!loader) return;
+
+      const hideLoader = () => {
+        loader.classList.add('is-hidden');
+        loader.style.opacity = '0';
+        loader.style.visibility = 'hidden';
+        loader.style.display = 'none';
+      };
+
+      if (mv.loaded) {
+        hideLoader();
+      }
+
+      mv.addEventListener('load', hideLoader);
+      mv.addEventListener('error', hideLoader);
+      mv.addEventListener('model-visibility', (e) => {
+        if (e.detail?.visible) hideLoader();
+      });
+      mv.addEventListener('progress', (e) => {
+        if (e.detail?.totalProgress >= 1) {
+          setTimeout(hideLoader, 100);
+        }
+      });
+    };
+
+    document.querySelectorAll('model-viewer').forEach(bindLoader);
   }
 
   /* ==========================================================================
@@ -516,7 +662,7 @@
                 <img src="${prod.featured_image || ''}" class="pf-cross-sell-thumb" alt="${prod.title}">
                 <div class="pf-cross-sell-details">
                   <div class="pf-cross-sell-name">${prod.title}</div>
-                  <div class="pf-cross-sell-price">$${price}</div>
+                  <div class="pf-cross-sell-price">₱${price}</div>
                 </div>
                 <button type="button" class="pf-cross-sell-add" data-quick-add-id="${prod.variants[0]?.id}">
                   + Add
@@ -556,6 +702,144 @@
     if (firstItem && firstItem.dataset.productId) {
       renderRecommendations(firstItem.dataset.productId);
     }
+  }
+
+  /* ==========================================================================
+     7.5 ASSET BROWSER VIEW SWITCHER (GRID vs DETAILED LIST)
+     - Switches between 3D grid cards and detailed studio list layout
+     - Persists choice in localStorage ('pf-asset-view-mode')
+     ========================================================================== */
+  function initViewSwitcher() {
+    const viewButtons = document.querySelectorAll('.pf-view-btn');
+    const productGrid = document.getElementById('product-grid');
+    if (!viewButtons.length || !productGrid) return;
+
+    const setView = (mode) => {
+      viewButtons.forEach((btn) => {
+        const isActive = btn.dataset.view === mode;
+        btn.classList.toggle('is-active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+
+      if (mode === 'list') {
+        productGrid.classList.add('is-list-view');
+      } else {
+        productGrid.classList.remove('is-list-view');
+      }
+
+      try {
+        localStorage.setItem('pf-asset-view-mode', mode);
+      } catch (e) {}
+    };
+
+    viewButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetView = btn.dataset.view;
+        if (targetView) setView(targetView);
+      });
+    });
+
+    // Restore saved view preference
+    try {
+      const saved = localStorage.getItem('pf-asset-view-mode');
+      if (saved === 'list' || saved === 'grid') {
+        setView(saved);
+      }
+    } catch (e) {}
+  }
+
+  /* ==========================================================================
+     8. DARK / LIGHT MODE THEME ENGINE & ZERO-FLICKER SYNCHRONIZATION
+     - Header & Drawer Sun/Moon button toggling
+     - Keyboard shortcut: Ctrl + Shift + D (or Cmd + Shift + D)
+     - localStorage persistence ('pf-theme': 'dark' | 'light')
+     - Custom event 'pf:themechange' dispatch
+     - Model-viewer illumination sync
+     ========================================================================== */
+  function initThemeSwitcher() {
+    const getStoredTheme = () => {
+      try {
+        return localStorage.getItem('pf-theme') || 'light';
+      } catch (e) {
+        return 'light';
+      }
+    };
+
+    const applyTheme = (theme, animate = false) => {
+      const activeTheme = theme === 'light' ? 'light' : 'dark';
+      
+      if (animate) {
+        document.documentElement.classList.add('pf-theme-transitioning');
+      }
+
+      document.documentElement.setAttribute('data-theme', activeTheme);
+      document.documentElement.classList.remove('pf-theme-dark', 'pf-theme-light');
+      document.documentElement.classList.add(`pf-theme-${activeTheme}`);
+
+      try {
+        localStorage.setItem('pf-theme', activeTheme);
+      } catch (e) {}
+
+      // Update theme-color meta tag
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', activeTheme === 'dark' ? '#0d0e12' : '#f8fafc');
+      }
+
+      // Update accessibility labels on all toggle buttons
+      const toggles = document.querySelectorAll('[data-pf-theme-toggle]');
+      toggles.forEach((btn) => {
+        const nextMode = activeTheme === 'dark' ? 'Light' : 'Dark';
+        btn.setAttribute('aria-label', `Switch to ${nextMode} mode`);
+        btn.setAttribute('title', `Switch to ${nextMode} mode (Ctrl+Shift+D)`);
+      });
+
+      // Notify viewers and external listeners
+      window.dispatchEvent(new CustomEvent('pf:themechange', { detail: { theme: activeTheme } }));
+
+      // Adjust model-viewers if needed
+      document.querySelectorAll('model-viewer').forEach((mv) => {
+        if (activeTheme === 'light') {
+          mv.setAttribute('exposure', '1.1');
+          mv.setAttribute('shadow-intensity', '0.85');
+        } else {
+          mv.setAttribute('exposure', '1.0');
+          mv.setAttribute('shadow-intensity', '1.0');
+        }
+      });
+
+      if (animate) {
+        setTimeout(() => {
+          document.documentElement.classList.remove('pf-theme-transitioning');
+        }, 300);
+      }
+    };
+
+    const toggleTheme = () => {
+      const current = document.documentElement.getAttribute('data-theme') || getStoredTheme();
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next, true);
+    };
+
+    // Attach click handlers to all theme toggles
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-pf-theme-toggle]');
+      if (!btn) return;
+      e.preventDefault();
+      toggleTheme();
+    });
+
+    // Keyboard shortcut: Ctrl + Shift + D or Cmd + Shift + D
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+        e.preventDefault();
+        toggleTheme();
+      }
+    });
+
+    // Initial label sync
+    const currentTheme = document.documentElement.getAttribute('data-theme') || getStoredTheme();
+    applyTheme(currentTheme, false);
   }
 
 })();

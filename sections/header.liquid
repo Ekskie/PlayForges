@@ -221,14 +221,24 @@
                           </details>
                         {%- else -%}
                           <a href="{{ link.url }}" class="menu-drawer__menu-item list-menu__item link link--text focus-inset{% if link.current %} menu-drawer__menu-item--active{% endif %}"{% if link.current %} aria-current="page"{% endif %}>
-                            {{ link.title | escape }}
+                            {%- if link.title == 'Catalog' -%}
+                              Browse Assets
+                            {%- else -%}
+                              {{ link.title | escape }}
+                            {%- endif -%}
                           </a>
                         {%- endif -%}
                       </li>
                     {%- endfor -%}
+                    <li>
+                      <a href="{{ routes.collections_url }}" class="menu-drawer__menu-item list-menu__item link link--text focus-inset">
+                        Collections
+                      </a>
+                    </li>
                   </ul>
                 </nav>
                 <div class="menu-drawer__utility-links">
+                  {% render 'pf-theme-toggle' %}
                   {%- if shop.customer_accounts_enabled -%}
                     <a href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}" class="menu-drawer__account link focus-inset h5 medium-hide large-up-hide">
                       {% render 'icon-account' %}
@@ -454,7 +464,7 @@
                 }}
               </div>
             {%- else -%}
-              <span class="h2">{{ shop.name }}</span>
+              <span class="header__heading-text">Play<span>Forge</span></span>
             {%- endif -%}
           </a>
       {%- if request.page_type == 'index' -%}
@@ -506,11 +516,22 @@
                   </header-menu>
                 {%- else -%}
                   <a href="{{ link.url }}" class="header__menu-item list-menu__item link link--text focus-inset"{% if link.current %} aria-current="page"{% endif %}>
-                    <span {%- if link.current %} class="header__active-menu-item"{% endif %}>{{ link.title | escape }}</span>
+                    <span {%- if link.current %} class="header__active-menu-item"{% endif %}>
+                      {%- if link.title == 'Catalog' -%}
+                        Browse Assets
+                      {%- else -%}
+                        {{ link.title | escape }}
+                      {%- endif -%}
+                    </span>
                   </a>
                 {%- endif -%}
               </li>
             {%- endfor -%}
+            <li>
+              <a href="{{ routes.collections_url }}" class="header__menu-item list-menu__item link link--text focus-inset">
+                <span>Collections</span>
+              </a>
+            </li>
           </ul>
         </nav>
       {%- elsif section.settings.menu_type_desktop != 'drawer' -%}
@@ -551,11 +572,22 @@
                   </header-menu>
                 {%- else -%}
                   <a href="{{ link.url }}" class="header__menu-item list-menu__item link link--text focus-inset"{% if link.current %} aria-current="page"{% endif %}>
-                    <span {%- if link.current %} class="header__active-menu-item"{% endif %}>{{ link.title | escape }}</span>
+                    <span {%- if link.current %} class="header__active-menu-item"{% endif %}>
+                      {%- if link.title == 'Catalog' -%}
+                        Browse Assets
+                      {%- else -%}
+                        {{ link.title | escape }}
+                      {%- endif -%}
+                    </span>
                   </a>
                 {%- endif -%}
               </li>
             {%- endfor -%}
+            <li>
+              <a href="{{ routes.collections_url }}" class="header__menu-item list-menu__item link link--text focus-inset">
+                <span>Collections</span>
+              </a>
+            </li>
           </ul>
         </nav>
       {%- endif -%}
@@ -583,7 +615,7 @@
                 }}
               </div>
             {%- else -%}
-              <span class="h2">{{ shop.name }}</span>
+              <span class="header__heading-text">Play<span>Forge</span></span>
             {%- endif -%}
           </a>
       {%- if request.page_type == 'index' -%}
@@ -718,6 +750,8 @@
             {% render block %}
         {%- endcase -%}
       {%- endfor -%}
+
+      {% render 'pf-theme-toggle' %}
 
       <a href="{{ routes.cart_url }}" class="header__icon header__icon--cart link focus-inset" id="cart-icon-bubble">
         {%- liquid

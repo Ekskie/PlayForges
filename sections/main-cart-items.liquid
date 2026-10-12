@@ -95,6 +95,17 @@
 
                     <a href="{{ item.url }}" class="cart-item__name h4 break">{{ item.product.title | escape }}</a>
 
+                    <div class="pf-cart-item-meta" style="margin: 6px 0 8px 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                      <span class="pf-spec-pill is-format">Commercial License</span>
+                      <span class="pf-spec-pill is-engine">Instant DCC Download</span>
+                      {%- if item.product.metafields.custom.asset_format != blank -%}
+                        <span class="pf-spec-pill is-format">{{ item.product.metafields.custom.asset_format }}</span>
+                      {%- endif -%}
+                      {%- if item.product.metafields.custom.engine_support != blank -%}
+                        <span class="pf-spec-pill is-engine">{{ item.product.metafields.custom.engine_support }}</span>
+                      {%- endif -%}
+                    </div>
+
                     {%- if item.original_price != item.final_price -%}
                       <div class="cart-item__discounted-prices">
                         <span class="visually-hidden">

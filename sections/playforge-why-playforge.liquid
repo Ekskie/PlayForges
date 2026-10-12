@@ -1,6 +1,6 @@
 {% comment %}
-  PlayForge Why PlayForge Section
-  Explains the 5 core game-ready pipeline pillars that distinguish PlayForge from generic asset stores.
+  PlayForge Studio Standard Section
+  5 technical pillars distinguishing PlayForge assets from generic asset stores.
 {% endcomment %}
 
 <div
@@ -10,7 +10,7 @@
   <div class="pf-container">
     <div class="pf-section-header">
       <div class="pf-section-title-wrap">
-        <span class="pf-section-kicker">{{ section.settings.kicker | default: 'The PlayForge Standard' }}</span>
+        <span class="pf-section-kicker">{{ section.settings.kicker | default: 'Studio Standard' }}</span>
         <h2 class="pf-section-title">{{ section.settings.heading | default: 'Engine-Ready Architecture' }}</h2>
         <p class="pf-section-subtitle">
           {{
@@ -21,12 +21,14 @@
       </div>
     </div>
 
-    <div class="pf-pillars-grid">
+    <div class="pf-standards-list">
       {%- for block in section.blocks -%}
-        <div class="pf-pillar-card" {{ block.shopify_attributes }}>
-          <span class="pf-pillar-number">0{{ forloop.index }} //</span>
-          <h3 class="pf-pillar-title">{{ block.settings.title }}</h3>
-          <p class="pf-pillar-desc">{{ block.settings.description }}</p>
+        <div class="pf-standard-item" {{ block.shopify_attributes }}>
+          <span class="pf-standard-num">0{{ forloop.index }}</span>
+          <div class="pf-standard-content">
+            <h3 class="pf-standard-title">{{ block.settings.title }}</h3>
+            <p class="pf-standard-desc">{{ block.settings.description }}</p>
+          </div>
         </div>
       {%- endfor -%}
     </div>
@@ -42,8 +44,8 @@
     {
       "type": "text",
       "id": "kicker",
-      "label": "Kicker",
-      "default": "The PlayForge Standard"
+      "label": "Kicker Note",
+      "default": "Studio Standard"
     },
     {
       "type": "text",
@@ -60,7 +62,7 @@
     {
       "type": "range",
       "id": "padding_top",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",
@@ -70,7 +72,7 @@
     {
       "type": "range",
       "id": "padding_bottom",
-      "min": 0,
+      "min": 24,
       "max": 120,
       "step": 4,
       "unit": "px",
@@ -105,36 +107,29 @@
         {
           "type": "pillar",
           "settings": {
-            "title": "Game-Ready Topology",
-            "description": "Clean quads and tris with intentional edge loops, zero non-manifold vertices, optimized silhouette density, and full LOD0 to LOD3 hierarchies."
+            "title": "Clean Quad Topology",
+            "description": "Consistent edge flow, zero non-manifold geometry, verified normal orientation, and full LOD hierarchies."
           }
         },
         {
           "type": "pillar",
           "settings": {
             "title": "Calibrated PBR Materials",
-            "description": "100% physically based rendering textures packed for Unreal (ORM: Occlusion/Roughness/Metallic) and Unity (Mask Map) in crisp 2K and 4K resolutions."
+            "description": "Physically accurate metallic, roughness, and normal maps packed natively for Unreal ORM and Unity Mask maps."
           }
         },
         {
           "type": "pillar",
           "settings": {
-            "title": "Universal Multi-Format Pipeline",
-            "description": "Every model includes native industry-standard exports: FBX, GLB/glTF, OBJ, BLEND, and USDZ for maximum pipeline flexibility."
+            "title": "Multi-Format Exports",
+            "description": "FBX, GLB/glTF, OBJ, and native source files with clean pivots centered at root for immediate level design placement."
           }
         },
         {
           "type": "pillar",
           "settings": {
-            "title": "Commercial-Friendly Licensing",
-            "description": "Straightforward royalty-free commercial licenses. Use assets across unlimited commercial games, interactive apps, and cinematic productions."
-          }
-        },
-        {
-          "type": "pillar",
-          "settings": {
-            "title": "Engine Plug-and-Play",
-            "description": "Pre-configured asset prefabs and material instances for Unreal Engine 5 (Nanite & Lumen ready), Unity (URP & HDRP), and Godot 4."
+            "title": "Clear Commercial Licensing",
+            "description": "Straightforward royalty-free commercial licenses covering unlimited shipped games, interactive apps, and cinematic productions."
           }
         }
       ]

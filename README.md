@@ -103,24 +103,44 @@ PlayForge introduces 7 custom Shopify sections with full Theme Editor schemas:
 | **Featured Collection** | `sections/playforge-featured-collection.liquid` | Spotlight pack showcase for *"Post-Apocalyptic City"* with kit breakdown and CTA. |
 | **Free Developer Assets** | `sections/playforge-free-assets.liquid` | Curated $0 starter assets for developers to test topologies in their pipelines. |
 | **Why PlayForge** | `sections/playforge-why-playforge.liquid` | Technical credibility breakdown of the 5 game-ready pillars (Topology, PBR, Formats, License, Engines). |
+| **Modular 3D Bundle Builder** | `sections/playforge-bundle-builder.liquid` | Interactive custom kit builder with dynamic 25% discount, real-time 3D model viewport, and 1-click bundle deployment to cart. |
 | **Pipeline Matrix** | `sections/playforge-specs.liquid` | Standardized specifications matrix for Unreal, Unity, Godot, and Blender pipelines. |
 
 ---
 
-## Local Development & Theme Preview
+## Part 2: PlayForge Asset Engine (Embedded Shopify App)
 
-### Requirements
-- [Shopify CLI 3.x](https://shopify.dev/docs/themes/tools/cli)
-- Modern web browser with WebGL 2.0 support (Chrome, Firefox, Safari, Edge)
+Located in `/app`, the **PlayForge Asset Engine** is an embedded Shopify Admin app built with:
+- **Frontend**: Vite + React 18 + TypeScript + Lucide Icons
+- **Backend**: Node.js + Express
+- **Database & ORM**: MySQL + Drizzle ORM (`drizzle-orm/mysql2`) with relational schema and migrations
+- **Scoring Engine**: 3D Pipeline Readiness Scoring Engine (benchmarks polygon budgets, LOD hierarchies, and PBR textures)
+- **Storefront Sync**: 1-Click synchronization to Shopify Product Metafields under `custom.*`, feeding the public PlayForge theme (Part 1).
+- **Audit Trail**: Activity logging tracking all ingestions, quality evaluations, and syncs.
 
-### Run Locally
+See [`APP_DECISIONS.md`](./APP_DECISIONS.md) for full architecture rationale, schema diagrams, and engineering tradeoffs.
+
+---
+
+## Local Development & Running Instructions
+
+### 1. Preview Public Storefront Theme (Part 1)
 ```bash
 # Preview theme locally against a development store
 shopify theme dev --store <your-store-name>.myshopify.com
 ```
 
-### Push Theme to Store
+### 2. Run Embedded Admin App (Part 2)
 ```bash
-# Push theme files to Shopify Admin
-shopify theme push
+cd app
+npm install
+
+# Start development server (backend on :3000, Vite client on :5173)
+npm run dev
+npm run dev:client
+
+# Or build and run production bundle
+npm run build
+npm run start
 ```
+Visit `http://localhost:3000` to interact with the PlayForge Asset Engine!

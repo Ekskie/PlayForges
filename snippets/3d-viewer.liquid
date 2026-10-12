@@ -57,7 +57,7 @@
       shadow-intensity="{{ shadow_intensity | default: '1' }}"
       exposure="{{ exposure | default: '1.0' }}"
       interaction-prompt="none"
-      camera-orbit="0deg 75deg 105%"
+      camera-orbit="{% if is_hero %}0deg 75deg 92%{% else %}0deg 75deg 105%{% endif %}"
       min-camera-orbit="auto auto 20%"
       max-camera-orbit="auto auto 300%"
       bounds="tight"
