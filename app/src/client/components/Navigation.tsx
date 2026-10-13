@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Box, PlusCircle, Activity, Globe, CheckCircle, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Box, PlusCircle, Activity, Globe, CheckCircle, ExternalLink, Layers } from 'lucide-react';
 
 interface NavigationProps {
   currentTab: string;
@@ -58,6 +58,15 @@ export const Navigation: React.FC<NavigationProps> = ({
           <Box size={15} />
           <span>Asset Catalog</span>
           {assetsCount > 0 && <span className="nav-tab-count">{assetsCount}</span>}
+        </button>
+
+        <button
+          type="button"
+          className={`nav-tab-pill ${currentTab === 'bundle' ? 'is-active' : ''}`}
+          onClick={() => onSelectTab('bundle')}
+        >
+          <Layers size={15} />
+          <span>Bundle Builder</span>
         </button>
 
         <button

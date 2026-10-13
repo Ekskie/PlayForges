@@ -82,7 +82,7 @@
                 </li>
               {%- endfor -%}
               <li>
-                <a href="{{ routes.collections_url }}" class="menu-drawer__menu-item list-menu__item link link--text focus-inset">
+                <a href="{{ routes.collections_url }}" class="menu-drawer__menu-item list-menu__item link link--text focus-inset{% if request.page_type == 'list-collections' %} menu-drawer__menu-item--active{% endif %}"{% if request.page_type == 'list-collections' %} aria-current="page"{% endif %}>
                   Collections
                 </a>
               </li>

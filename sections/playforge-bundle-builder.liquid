@@ -7,12 +7,14 @@
 
 <div class="pf-bundle-builder page-width section-{{ section.id }}-padding" id="bundle-builder">
   <div class="pf-section-header">
-    {%- if section.settings.kicker != blank -%}
-      <span class="pf-kicker">{{ section.settings.kicker }}</span>
-    {%- endif -%}
-    <h2 class="pf-section-title">{{ section.settings.heading | escape }}</h2>
+    <div class="pf-section-title-wrap">
+      {%- if section.settings.kicker != blank -%}
+        <span class="pf-section-kicker">{{ section.settings.kicker }}</span>
+      {%- endif -%}
+      <h2 class="pf-section-title">{{ section.settings.heading | escape }}</h2>
+    </div>
     {%- if section.settings.subheading != blank -%}
-      <p class="pf-section-sub">{{ section.settings.subheading | escape }}</p>
+      <p class="pf-section-subtitle">{{ section.settings.subheading | escape }}</p>
     {%- endif -%}
   </div>
 
@@ -30,7 +32,7 @@
       <div class="pf-bundle-model-wrap">
         <model-viewer
           id="pf-bundle-viewer"
-          src="{{ 'pf-model-drone.glb' | asset_url }}"
+          src="{{ 'pf-upload-1791730951473-tindahan-ni-mama.glb' | asset_url }}"
           camera-controls
           auto-rotate
           rotation-per-second="24deg"
@@ -38,7 +40,7 @@
           exposure="1.0"
           interaction-prompt="none"
           loading="lazy"
-          style="width: 100%; height: 380px; background: radial-gradient(circle at 50% 50%, #1c1d25 0%, #0d0e12 100%);"
+          style="width: 100%; height: 380px; background: var(--pf-viewport-bg);"
         >
         </model-viewer>
       </div>
@@ -46,15 +48,15 @@
       <div class="pf-bundle-stage-footer">
         <div class="pf-spec-item">
           <span class="pf-spec-label">Combined Topology</span>
-          <span class="pf-spec-val" data-bundle-total-poly>~42,800 Δ Quads</span>
+          <span class="pf-spec-val" data-bundle-total-poly>~0 Δ Quads</span>
         </div>
         <div class="pf-spec-item">
           <span class="pf-spec-label">Texture Channels</span>
-          <span class="pf-spec-val">4K PBR (Packed ORM)</span>
+          <span class="pf-spec-val" data-bundle-active-texture>4K PBR (Packed ORM)</span>
         </div>
         <div class="pf-spec-item">
           <span class="pf-spec-label">License Type</span>
-          <span class="pf-spec-val">Commercial Royalty-Free</span>
+          <span class="pf-spec-val" data-bundle-active-license>Commercial Royalty-Free</span>
         </div>
       </div>
     </div>
@@ -64,59 +66,9 @@
       <h3 class="pf-bundle-slots-title">Assemble Your Production Kit</h3>
       <p class="pf-bundle-slots-desc">Select 1 asset from each tier to unlock 25% instant bundle discount.</p>
 
-      <!-- Slot 1: Base Environment -->
-      <div class="pf-bundle-slot" data-slot="environment">
-        <div class="pf-slot-header">
-          <span class="pf-slot-step">Step 1</span>
-          <span class="pf-slot-name">Environment Kit</span>
-        </div>
-        <div class="pf-slot-options">
-          <button type="button" class="pf-slot-btn is-active" data-name="Orbital Colony Outpost" data-price="2400" data-poly="28400" data-model="{{ 'pf-model-astronaut.glb' | asset_url }}">
-            <span class="pf-slot-btn-title">Orbital Colony Outpost</span>
-            <span class="pf-slot-btn-price">₱2,400.00</span>
-          </button>
-          <button type="button" class="pf-slot-btn" data-name="Subterranean Bunker" data-price="2100" data-poly="24100" data-model="{{ 'pf-model-helmet.glb' | asset_url }}">
-            <span class="pf-slot-btn-title">Subterranean Bunker</span>
-            <span class="pf-slot-btn-price">₱2,100.00</span>
-          </button>
-        </div>
-      </div>
+      <!-- Dynamic Bundle Slots Rendered from PlayForge Bundle Kit Builder -->
+      {% render 'playforge-bundle-slots' %}
 
-      <!-- Slot 2: Hero Asset -->
-      <div class="pf-bundle-slot" data-slot="hero">
-        <div class="pf-slot-header">
-          <span class="pf-slot-step">Step 2</span>
-          <span class="pf-slot-name">Hero Character / Mech</span>
-        </div>
-        <div class="pf-slot-options">
-          <button type="button" class="pf-slot-btn is-active" data-name="Autonomous Recon Drone" data-price="1750" data-poly="14400" data-model="{{ 'pf-model-drone.glb' | asset_url }}">
-            <span class="pf-slot-btn-title">Autonomous Recon Drone</span>
-            <span class="pf-slot-btn-price">₱1,750.00</span>
-          </button>
-          <button type="button" class="pf-slot-btn" data-name="Heavy Combat Operative" data-price="1950" data-poly="18200" data-model="{{ 'pf-model-astronaut.glb' | asset_url }}">
-            <span class="pf-slot-btn-title">Heavy Combat Operative</span>
-            <span class="pf-slot-btn-price">₱1,950.00</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Slot 3: Modular Props Pack -->
-      <div class="pf-bundle-slot" data-slot="props">
-        <div class="pf-slot-header">
-          <span class="pf-slot-step">Step 3</span>
-          <span class="pf-slot-name">Modular Prop Pack</span>
-        </div>
-        <div class="pf-slot-options">
-          <button type="button" class="pf-slot-btn is-active" data-name="Tactical Terminal & Hologram Set" data-price="1250" data-poly="8200" data-model="{{ 'pf-model-helmet.glb' | asset_url }}">
-            <span class="pf-slot-btn-title">Tactical Terminal Set</span>
-            <span class="pf-slot-btn-price">₱1,250.00</span>
-          </button>
-          <button type="button" class="pf-slot-btn" data-name="Industrial Storage & Crate Kit" data-price="1100" data-poly="6800" data-model="{{ 'pf-model-drone.glb' | asset_url }}">
-            <span class="pf-slot-btn-title">Industrial Crate Kit</span>
-            <span class="pf-slot-btn-price">₱1,100.00</span>
-          </button>
-        </div>
-      </div>
 
       <!-- Pricing Summary & 1-Click Checkout -->
       <div class="pf-bundle-summary">
@@ -167,15 +119,17 @@
   @media (max-width: 990px) {
     .pf-bundle-container {
       grid-template-columns: 1fr;
+      gap: 20px;
     }
   }
   .pf-bundle-viewport-card, .pf-bundle-slots-card {
-    background: #121318 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: var(--pf-bg-surface);
+    border: 1px solid var(--pf-border);
     border-radius: var(--pf-radius-lg, 12px);
     padding: 24px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-    color: #f1efe7 !important;
+    box-shadow: var(--pf-shadow-card);
+    color: var(--pf-text-primary);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
   .pf-bundle-stage-header {
     display: flex;
@@ -189,19 +143,20 @@
     gap: 8px;
     font-size: 1.4rem;
     font-weight: 700;
-    color: #ffffff !important;
+    color: var(--pf-heading-color);
   }
   .pf-pulse-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--pf-forge-orange, #FF5A1F);
-    box-shadow: 0 0 10px var(--pf-forge-orange, #FF5A1F);
+    background: var(--pf-accent, #FF5A1F);
+    box-shadow: 0 0 10px var(--pf-accent, #FF5A1F);
   }
   .pf-bundle-model-wrap {
-    border-radius: 8px;
+    border-radius: var(--pf-radius-md, 8px);
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--pf-border);
+    background: var(--pf-viewport-bg);
     position: relative;
   }
   .pf-bundle-stage-footer {
@@ -210,12 +165,12 @@
     gap: 12px;
     margin-top: 18px;
     padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--pf-border);
   }
   .pf-spec-label {
     display: block;
     font-size: 1.15rem;
-    color: #94a3b8 !important;
+    color: var(--pf-text-secondary);
     margin-bottom: 4px;
     font-family: var(--pf-font-mono, monospace);
   }
@@ -223,18 +178,20 @@
     display: block;
     font-size: 1.3rem;
     font-weight: 600;
-    color: #ffffff !important;
+    color: var(--pf-heading-color);
   }
   .pf-bundle-slots-title {
     font-size: 2rem;
     font-weight: 700;
-    color: #ffffff !important;
+    color: var(--pf-heading-color);
     margin: 0 0 6px 0;
+    letter-spacing: -0.02em;
   }
   .pf-bundle-slots-desc {
-    color: #94a3b8 !important;
+    color: var(--pf-text-secondary);
     font-size: 1.3rem;
     margin: 0 0 20px 0;
+    line-height: 1.4;
   }
   .pf-bundle-slot {
     margin-bottom: 16px;
@@ -249,15 +206,16 @@
     font-size: 1rem;
     font-weight: 700;
     text-transform: uppercase;
-    background: rgba(255, 90, 31, 0.18);
-    color: #FF5A1F !important;
+    background: var(--pf-accent-subtle, rgba(255, 90, 31, 0.12));
+    color: var(--pf-accent, #FF5A1F);
     padding: 2px 6px;
     border-radius: 4px;
+    font-family: var(--pf-font-mono, monospace);
   }
   .pf-slot-name {
     font-size: 1.35rem;
     font-weight: 600;
-    color: #ffffff !important;
+    color: var(--pf-heading-color);
   }
   .pf-slot-options {
     display: grid;
@@ -269,52 +227,54 @@
     flex-direction: column;
     align-items: flex-start;
     padding: 10px 12px;
-    background: #181920 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 6px;
+    background: var(--pf-bg-surface-subtle);
+    border: 1px solid var(--pf-border);
+    border-radius: var(--pf-radius-sm, 6px);
     cursor: pointer;
     text-align: left;
-    transition: all 0.2s ease;
+    transition: var(--pf-transition);
   }
   .pf-slot-btn:hover {
-    border-color: rgba(255, 90, 31, 0.5) !important;
-    background: #20222b !important;
+    border-color: var(--pf-accent);
+    background: var(--pf-bg-surface);
+    transform: translateY(-1px);
   }
   .pf-slot-btn.is-active {
-    border-color: #FF5A1F !important;
-    background: rgba(255, 90, 31, 0.14) !important;
-    box-shadow: 0 0 12px rgba(255, 90, 31, 0.25) !important;
+    border-color: var(--pf-accent);
+    background: var(--pf-accent-subtle);
+    box-shadow: 0 0 0 1px var(--pf-accent);
   }
   .pf-slot-btn-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #ffffff !important;
+    color: var(--pf-heading-color);
     line-height: 1.2;
     margin-bottom: 4px;
   }
   .pf-slot-btn.is-active .pf-slot-btn-title {
-    color: #ffffff !important;
+    color: var(--pf-heading-color);
     font-weight: 700;
   }
   .pf-slot-btn-price {
     font-size: 1.2rem;
-    color: #FF5A1F !important;
+    color: var(--pf-accent);
     font-weight: 700;
+    font-family: var(--pf-font-mono, monospace);
   }
   .pf-bundle-summary {
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--pf-border);
   }
   .pf-bundle-calc-row {
     display: flex;
     justify-content: space-between;
     font-size: 1.3rem;
-    color: #94a3b8 !important;
+    color: var(--pf-text-secondary);
     margin-bottom: 6px;
   }
   .pf-discount-row {
-    color: #22c55e !important;
+    color: #10B981 !important;
     font-weight: 600;
   }
   .pf-bundle-total-row {
@@ -323,17 +283,18 @@
     align-items: baseline;
     margin: 12px 0 16px 0;
     padding: 10px 0;
-    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    border-top: 1px dashed var(--pf-border);
   }
   .pf-total-label {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #ffffff !important;
+    color: var(--pf-heading-color);
   }
   .pf-total-val {
     font-size: 2.2rem;
     font-weight: 800;
-    color: #FF5A1F !important;
+    color: var(--pf-accent);
+    font-family: var(--pf-font-mono, monospace);
   }
   .pf-bundle-add-btn {
     width: 100%;
@@ -342,20 +303,20 @@
     justify-content: center;
     gap: 10px;
     padding: 14px 20px;
-    background: var(--pf-forge-orange, #FF5A1F);
+    background: var(--pf-accent, #FF5A1F);
     color: #ffffff;
     font-size: 1.4rem;
     font-weight: 700;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--pf-radius-sm, 6px);
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(255, 90, 31, 0.4);
-    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(255, 90, 31, 0.35);
+    transition: var(--pf-transition);
   }
   .pf-bundle-add-btn:hover {
-    background: #e04b14;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(255, 90, 31, 0.6);
+    background: var(--pf-accent-hover, #e04b14);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 90, 31, 0.5);
   }
   .pf-bundle-secure-note {
     display: flex;
@@ -363,7 +324,7 @@
     justify-content: center;
     gap: 6px;
     font-size: 1.15rem;
-    color: var(--pf-text-muted, #64748b);
+    color: var(--pf-text-tertiary);
     margin-top: 12px;
     text-align: center;
   }
@@ -376,11 +337,38 @@
 
     const viewer = builder.querySelector('#pf-bundle-viewer');
     const titleBadge = builder.querySelector('[data-bundle-active-title]');
+    const engineBadge = builder.querySelector('[data-bundle-active-engine]');
+    const textureBadge = builder.querySelector('[data-bundle-active-texture]');
+    const licenseBadge = builder.querySelector('[data-bundle-active-license]');
     const totalPolyBadge = builder.querySelector('[data-bundle-total-poly]');
     const originalPriceEl = builder.querySelector('[data-bundle-original]');
     const discountPriceEl = builder.querySelector('[data-bundle-discount]');
     const finalPriceEl = builder.querySelector('[data-bundle-final]');
     const addBtn = builder.querySelector('[data-bundle-add-btn]');
+    const discountGroup = builder.querySelector('[data-bundle-discount-rate]');
+
+    const discountRate = discountGroup
+      ? (parseFloat(discountGroup.dataset.bundleDiscountRate || 25) / 100)
+      : 0.25;
+
+    function applyOptionToViewer(btn) {
+      if (!btn) return;
+      if (btn.dataset.model && viewer) {
+        viewer.src = btn.dataset.model;
+      }
+      if (titleBadge && btn.dataset.name) {
+        titleBadge.textContent = btn.dataset.name;
+      }
+      if (engineBadge && btn.dataset.engine) {
+        engineBadge.textContent = btn.dataset.engine;
+      }
+      if (textureBadge && btn.dataset.texture) {
+        textureBadge.textContent = btn.dataset.texture;
+      }
+      if (licenseBadge && btn.dataset.license) {
+        licenseBadge.textContent = btn.dataset.license;
+      }
+    }
 
     function updateBundleCalculations() {
       const activeBtns = builder.querySelectorAll('.pf-slot-btn.is-active');
@@ -392,15 +380,25 @@
         totalPoly += parseInt(btn.dataset.poly || 0, 10);
       });
 
-      const discount = subtotal * 0.25;
+      const discount = subtotal * discountRate;
       const finalPrice = subtotal - discount;
+      const discountPct = Math.round(discountRate * 100);
 
       if (originalPriceEl) originalPriceEl.textContent = '₱' + subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (discountPriceEl) discountPriceEl.textContent = '-₱' + discount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const discountRowLabel = builder.querySelector('.pf-discount-row .pf-summary-label');
+      if (discountRowLabel) discountRowLabel.textContent = `Bundle Discount (${discountPct}% OFF):`;
       if (finalPriceEl) finalPriceEl.textContent = '₱' + finalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (totalPolyBadge) totalPolyBadge.textContent = '~' + totalPoly.toLocaleString() + ' Δ Quads';
     }
 
+    // Initialize viewer from the first active slot button
+    const firstActive = builder.querySelector('.pf-slot-btn.is-active') || builder.querySelector('.pf-slot-btn');
+    if (firstActive) {
+      applyOptionToViewer(firstActive);
+    }
+
+    // Attach click listeners to all slot options
     builder.querySelectorAll('.pf-slot-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const parentSlot = this.closest('.pf-bundle-slot');
@@ -409,14 +407,7 @@
           this.classList.add('is-active');
         }
 
-        // Update 3D viewer model if provided
-        if (this.dataset.model && viewer) {
-          viewer.src = this.dataset.model;
-        }
-        if (titleBadge && this.dataset.name) {
-          titleBadge.textContent = this.dataset.name;
-        }
-
+        applyOptionToViewer(this);
         updateBundleCalculations();
       });
     });
@@ -427,29 +418,47 @@
         const originalText = addBtn.innerHTML;
         addBtn.innerHTML = '<span>Packaging 3D Assets...</span>';
 
-        // Add to Shopify cart drawer using AJAX Cart API
+        const activeBtns = builder.querySelectorAll('.pf-slot-btn.is-active');
+        const items = [];
+
+        activeBtns.forEach(btn => {
+          const vid = btn.dataset.variantId;
+          if (vid && parseInt(vid, 10)) {
+            items.push({
+              id: parseInt(vid, 10),
+              quantity: 1,
+              properties: {
+                'Custom Bundle': 'PlayForge 3D Production Kit',
+                'Asset': btn.dataset.name || '3D Asset',
+                'Discount': Math.round(discountRate * 100) + '% Instant Savings',
+                'Licensing': btn.dataset.license || 'Commercial Royalty-Free'
+              }
+            });
+          }
+        });
+
+        // Fallback to first store product if variants are not yet assigned
+        if (items.length === 0) {
+          items.push({
+            id: {{ collections.all.products.first.variants.first.id | default: 1 }},
+            quantity: 1,
+            properties: {
+              'Custom Bundle': 'PlayForge 3D Production Kit',
+              'Discount': Math.round(discountRate * 100) + '% Instant Savings',
+              'Licensing': 'Commercial Royalty-Free'
+            }
+          });
+        }
+
         fetch('/cart/add.js', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items: [
-              {
-                id: {{ collections.all.products.first.variants.first.id | default: 1 }},
-                quantity: 1,
-                properties: {
-                  'Custom Bundle': '3D Production Pack',
-                  'Bundle Discount': '25% Instant Savings',
-                  'Licensing': 'Commercial Royalty-Free'
-                }
-              }
-            ]
-          })
+          body: JSON.stringify({ items })
         })
         .then(res => res.json())
         .then(() => {
           addBtn.innerHTML = '✓ Bundle Added to Cart!';
           addBtn.style.background = '#22c55e';
-          // Open cart drawer if available
           const drawer = document.querySelector('cart-drawer');
           if (drawer && typeof drawer.open === 'function') {
             drawer.open();
@@ -463,7 +472,6 @@
           }, 2500);
         })
         .catch(() => {
-          // Fallback redirect to cart
           window.location.href = '/cart';
         });
       });

@@ -7,9 +7,10 @@ import authRouter from './routes/auth.js';
 import assetsRouter from './routes/assets.js';
 import dashboardRouter from './routes/dashboard.js';
 import logsRouter from './routes/logs.js';
+import bundleRouter from './routes/bundle.js';
 import { checkDatabaseConnection, isDbConnected } from '../db/index.js';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +31,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/logs', logsRouter);
+app.use('/api/bundle', bundleRouter);
 
 // System Health Check
 app.get('/api/health', (req, res) => {

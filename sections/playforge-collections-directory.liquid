@@ -33,7 +33,14 @@
           assign computed_col_count = 0
           assign computed_asset_count = 0
           
-          if section.blocks.size > 0
+          assign valid_blocks_count = 0
+          for block in section.blocks
+            if block.settings.collection != blank
+              assign valid_blocks_count = valid_blocks_count | plus: 1
+            endif
+          endfor
+
+          if valid_blocks_count > 0
             for block in section.blocks
               if block.settings.collection != blank
                 assign c = block.settings.collection
@@ -119,14 +126,21 @@
     <!-- Bento Grid Container -->
     <div class="pf-bento-grid" id="pf-collections-bento-grid">
       {%- liquid
-        assign has_blocks = false
-        if section.blocks.size > 0
-          assign has_blocks = true
+        assign valid_blocks_count = 0
+        for block in section.blocks
+          if block.settings.collection != blank
+            assign valid_blocks_count = valid_blocks_count | plus: 1
+          endif
+        endfor
+
+        assign has_valid_blocks = false
+        if valid_blocks_count > 0
+          assign has_valid_blocks = true
         endif
         assign card_index = 0
       -%}
 
-      {%- if has_blocks -%}
+      {%- if has_valid_blocks -%}
         {%- for block in section.blocks -%}
           {%- liquid
             assign col = block.settings.collection

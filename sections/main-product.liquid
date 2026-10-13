@@ -310,23 +310,61 @@
                 assign prod_format = product.metafields.custom.asset_format.value | default: product.metafields.custom.asset_format
                 assign prod_engine = product.metafields.custom.engine_support.value | default: product.metafields.custom.engine_support
                 assign prod_tex = product.metafields.custom.texture_resolution.value | default: product.metafields.custom.texture_resolution
+
+                if prod_poly == blank
+                  capture reg_poly
+                    render 'playforge-model-registry', product: product, field: 'polycount'
+                  endcapture
+                  assign reg_poly = reg_poly | strip
+                  if reg_poly != blank
+                    assign prod_poly = reg_poly
+                  else
+                    assign prod_poly = '14,400 Triangles'
+                  endif
+                endif
+
+                if prod_format == blank
+                  capture reg_format
+                    render 'playforge-model-registry', product: product, field: 'format'
+                  endcapture
+                  assign reg_format = reg_format | strip
+                  if reg_format != blank
+                    assign prod_format = reg_format
+                  else
+                    assign prod_format = 'GLB / FBX / OBJ'
+                  endif
+                endif
+
+                if prod_engine == blank
+                  capture reg_engine
+                    render 'playforge-model-registry', product: product, field: 'engine'
+                  endcapture
+                  assign reg_engine = reg_engine | strip
+                  if reg_engine != blank
+                    assign prod_engine = reg_engine
+                  else
+                    assign prod_engine = 'UE5 / Unity / Godot'
+                  endif
+                endif
+
+                if prod_tex == blank
+                  capture reg_tex
+                    render 'playforge-model-registry', product: product, field: 'texture'
+                  endcapture
+                  assign reg_tex = reg_tex | strip
+                  if reg_tex != blank
+                    assign prod_tex = reg_tex
+                  else
+                    assign prod_tex = '4K PBR'
+                  endif
+                endif
               -%}
-              {%- if prod_poly != blank or prod_format != blank or prod_engine != blank or prod_tex != blank -%}
-                <div class="pf-card-specs" style="margin-top: 10px; margin-bottom: 16px;">
-                  {%- if prod_poly != blank -%}
-                    <span class="pf-spec-pill is-poly">{{ prod_poly }}</span>
-                  {%- endif -%}
-                  {%- if prod_format != blank -%}
-                    <span class="pf-spec-pill is-format">{{ prod_format }}</span>
-                  {%- endif -%}
-                  {%- if prod_engine != blank -%}
-                    <span class="pf-spec-pill">{{ prod_engine }}</span>
-                  {%- endif -%}
-                  {%- if prod_tex != blank -%}
-                    <span class="pf-spec-pill">{{ prod_tex }}</span>
-                  {%- endif -%}
-                </div>
-              {%- endif -%}
+              <div class="pf-card-specs" style="margin-top: 10px; margin-bottom: 16px;">
+                <span class="pf-spec-pill is-poly">{{ prod_poly }}</span>
+                <span class="pf-spec-pill is-format">{{ prod_format }}</span>
+                <span class="pf-spec-pill">{{ prod_engine }}</span>
+                <span class="pf-spec-pill">{{ prod_tex }}</span>
+              </div>
             {%- when 'price' -%}
               <div class="no-js-hidden" id="price-{{ section.id }}" role="status" {{ block.shopify_attributes }}>
                 {%- render 'price',

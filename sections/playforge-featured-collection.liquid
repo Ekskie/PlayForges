@@ -5,9 +5,57 @@
 
 {%- liquid
   assign collection = section.settings.collection
+  if collection == blank
+    assign collection = collections['batang-kalye']
+  endif
+  if collection == blank
+    assign collection = collections.first
+  endif
+
   assign feat_model = section.settings.model_url
-  if feat_model == blank or feat_model contains 'KhronosGroup'
-    assign feat_model = 'pf-model-drone.glb' | asset_url
+  if feat_model == blank or feat_model contains 'KhronosGroup' or feat_model contains 'pf-model-drone' or feat_model contains 'pf-model-astronaut'
+    capture reg_model
+      if collection != blank and collection.products.first != blank
+        render 'playforge-model-registry', product: collection.products.first, field: 'model'
+      endif
+    endcapture
+    assign reg_model = reg_model | strip
+    if reg_model != blank
+      assign feat_model = reg_model
+    else
+      assign feat_model = 'pf-upload-1791850430200-batang_kalye.glb' | asset_url
+    endif
+  elsif feat_model contains '.glb'
+    unless feat_model contains 'http' or feat_model contains '//'
+      assign feat_model = feat_model | asset_url
+    endunless
+  endif
+
+  assign feat_heading = section.settings.heading
+  if feat_heading == blank or feat_heading == 'Post-Apocalyptic City'
+    if collection != blank and collection.title != blank
+      assign feat_heading = collection.title
+    else
+      assign feat_heading = 'Batang Kalye'
+    endif
+  endif
+
+  assign feat_desc = section.settings.description
+  if feat_desc == blank or feat_desc contains 'Complete modular environment collection'
+    if collection != blank and collection.description != blank
+      assign feat_desc = collection.description
+    else
+      assign feat_desc = 'A 3D Tayaan Filipino Game Assets. Complete modular kit featuring real-time rigged characters, cultural environment props, and game-ready topology.'
+    endif
+  endif
+
+  assign feat_link = section.settings.cta_link
+  if feat_link == blank or feat_link contains '/all'
+    if collection != blank
+      assign feat_link = collection.url
+    else
+      assign feat_link = '/collections/batang-kalye'
+    endif
   endif
 -%}
 
@@ -19,11 +67,11 @@
         <span class="pf-section-kicker">{{ section.settings.kicker | default: 'Featured Collection' }}</span>
         
         <h2 class="pf-section-title" style="font-size: clamp(2.6rem, 3.6vw, 4.2rem);">
-          {{ section.settings.heading | default: collection.title | default: 'Post-Apocalyptic City' }}
+          {{ feat_heading }}
         </h2>
 
         <p class="pf-section-subtitle" style="max-width: 500px; line-height: 1.6;">
-          {{ section.settings.description | default: collection.description | default: 'A comprehensive modular environment collection with clean topology, calibrated PBR shaders, and native engine prefabs.' }}
+          {{ feat_desc }}
         </p>
 
         <!-- Technical Specification Details -->
@@ -34,7 +82,7 @@
         </div>
 
         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 8px;">
-          <a href="{{ section.settings.cta_link | default: collection.url | default: routes.all_products_collection_url }}" class="button button--primary">
+          <a href="{{ feat_link }}" class="button button--primary">
             {{ section.settings.cta_label | default: 'Explore collection' }}
           </a>
 
@@ -47,13 +95,22 @@
       </div>
 
       <!-- Right 3D Pack Viewport Column -->
-      <div class="pf-viewer-container" style="aspect-ratio: 16 / 11; min-height: 380px;">
+      <div style="min-height: 380px; width: 100%;">
         {%- assign feat_poster_url = section.settings.image | image_url: width: 800 -%}
+        {%- if feat_poster_url == blank and collection.featured_image != blank -%}
+          {%- assign feat_poster_url = collection.featured_image | image_url: width: 800 -%}
+        {%- elsif feat_poster_url == blank and collection.products.first.featured_image != blank -%}
+          {%- assign feat_poster_url = collection.products.first.featured_image | image_url: width: 800 -%}
+        {%- endif -%}
+        {%- if feat_poster_url == blank -%}
+          {%- assign feat_poster_url = 'pf-upload-1791850446241-batang_kalye.png' | asset_url -%}
+        {%- endif -%}
+        {%- assign feat_viewer_id = 'featured-' | append: collection.handle | default: 'featured-batang-kalye' -%}
         {% render '3d-viewer',
           model_url: feat_model,
           poster_url: feat_poster_url,
-          alt: section.settings.heading,
-          viewer_id: 'featured-collection',
+          alt: feat_heading,
+          viewer_id: feat_viewer_id,
           aspect_ratio: '16 / 11',
           show_toolbar: true,
           badge_text: 'Interactive Kit'

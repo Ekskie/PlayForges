@@ -5,14 +5,14 @@ interface DashboardTabProps {
   stats: any;
   onNavigateToIngest: () => void;
   onNavigateToCatalog: () => void;
-  onReseedCatalog?: () => void;
+  onSyncFromShopify?: () => void;
 }
 
 export const DashboardTab: React.FC<DashboardTabProps> = ({
   stats,
   onNavigateToIngest,
   onNavigateToCatalog,
-  onReseedCatalog
+  onSyncFromShopify
 }) => {
   const kpis = stats?.kpis || {
     totalAssets: 4,
@@ -46,15 +46,15 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          {onReseedCatalog && (
+          {onSyncFromShopify && (
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={onReseedCatalog}
-              title="Reseed demo catalog models"
+              onClick={onSyncFromShopify}
+              title="Sync directly with live Shopify Admin catalog"
             >
               <RefreshCw size={14} />
-              <span>Reseed Demo Data</span>
+              <span>Sync with Shopify</span>
             </button>
           )}
           <button

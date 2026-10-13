@@ -1,52 +1,93 @@
 import { Router, Request, Response } from 'express';
 import { getActivityLogs } from '../services/auditLogger.js';
+import { getInMemoryAssets } from './assets.js';
+import { calculatePipelineScore } from '../services/scoringEngine.js';
 
 const router = Router();
 
 router.get('/stats', async (req: Request, res: Response) => {
-  // Fetch assets via internal API or in-memory list
-  // Import from assets or query DB
-  const logs = await getActivityLogs(1, 6);
+  try {
+    const assets = getInMemoryAssets();
+    const logs = await getActivityLogs(1, 6);
 
-  // We can calculate dynamic dashboard stats
-  res.json({
-    kpis: {
-      totalAssets: 4,
-      avgPipelineScore: 88,
-      syncedCount: 3,
-      outOfSyncCount: 1,
-      criticalAlertsCount: 1
-    },
-    tierDistribution: {
-      tier_s: 2, // >= 90
-      tier_a: 1, // 75-89
-      tier_b: 1, // 60-74
-      tier_c: 0  // < 60
-    },
-    categoryDistribution: {
-      vehicles: 1,
-      characters: 1,
-      props: 1,
-      environment: 1
-    },
-    urgentAlerts: [
-      {
-        id: 'alt-1',
-        assetTitle: 'Cyberpunk Industrial Generator Module',
-        type: 'warning',
-        message: 'High polygon density (78,000 Δ) without LOD2 mesh. Not synced to storefront.',
-        action: 'Recalibrate LODs'
-      },
-      {
-        id: 'alt-2',
-        assetTitle: 'Autonomous Recon Drone — Unit 04',
-        type: 'success',
-        message: 'Tier S Studio Grade. 9 Product Metafields currently live on PlayForge storefront.',
-        action: 'View Live 3D'
+    let tier_s = 0;
+    let tier_a = 0;
+    let tier_b = 0;
+    let tier_c = 0;
+    let totalScore = 0;
+    let criticalAlertsCount = 0;
+    const categoryDistribution: Record<string, number> = {};
+    const urgentAlerts: any[] = [];
+
+    for (let i = 0; i < assets.length; i++) {
+      const asset = assets[i];
+      const evaluation = calculatePipelineScore(asset);
+      totalScore += evaluation.overallScore;
+
+      // Tier count
+      if (evaluation.qualityTier === 'tier_s') tier_s++;
+      else if (evaluation.qualityTier === 'tier_a') tier_a++;
+      else if (evaluation.qualityTier === 'tier_b') tier_b++;
+      else tier_c++;
+
+      // Category count
+      const cat = asset.category || 'other';
+      categoryDistribution[cat] = (categoryDistribution[cat] || 0) + 1;
+
+      // Alert count
+      const hasCritical = evaluation.qualityTier === 'tier_c' || evaluation.overallScore < 70;
+      if (hasCritical) {
+        criticalAlertsCount++;
       }
-    ],
-    recentActivity: logs
-  });
+
+      // Collect top alerts
+      if (urgentAlerts.length < 3 && evaluation.alerts && evaluation.alerts.length > 0) {
+        const topAlert = evaluation.alerts[0];
+        urgentAlerts.push({
+          id: `alt-${asset.id}-${i}`,
+          assetTitle: asset.title,
+          type: topAlert.type,
+          message: topAlert.message,
+          action: topAlert.recommendation || 'Inspect Topology'
+        });
+      }
+    }
+
+    const totalAssets = assets.length;
+    const syncedCount = assets.filter(a => a.syncStatus === 'synced').length;
+    const outOfSyncCount = totalAssets - syncedCount;
+    const avgPipelineScore = totalAssets > 0 ? Math.round(totalScore / totalAssets) : 0;
+
+    res.json({
+      kpis: {
+        totalAssets,
+        avgPipelineScore,
+        syncedCount,
+        outOfSyncCount,
+        criticalAlertsCount
+      },
+      tierDistribution: {
+        tier_s,
+        tier_a,
+        tier_b,
+        tier_c
+      },
+      categoryDistribution,
+      urgentAlerts: urgentAlerts.length > 0 ? urgentAlerts : [
+        {
+          id: 'alt-default',
+          assetTitle: 'Autonomous Recon Drone — Unit 04',
+          type: 'success',
+          message: 'Tier S Studio Grade. 9 Product Metafields currently live on PlayForge storefront.',
+          action: 'View Live 3D'
+        }
+      ],
+      recentActivity: logs
+    });
+  } catch (err: any) {
+    console.error('[Dashboard] Error fetching stats:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

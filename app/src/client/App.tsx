@@ -4,6 +4,7 @@ import { DashboardTab } from './components/DashboardTab.js';
 import { AssetCatalogTab } from './components/AssetCatalogTab.js';
 import { AssetFormTab } from './components/AssetFormTab.js';
 import { ActivityLogTab } from './components/ActivityLogTab.js';
+import { BundleBuilderTab } from './components/BundleBuilderTab.js';
 import { StorefrontPreviewModal } from './components/StorefrontPreviewModal.js';
 
 export const App: React.FC = () => {
@@ -109,15 +110,15 @@ export const App: React.FC = () => {
     setCurrentTab('ingest');
   };
 
-  const handleReseedCatalog = async () => {
+  const handleSyncFromShopify = async () => {
     try {
-      const res = await fetch('/api/assets/reseed', { method: 'POST' });
+      const res = await fetch('/api/assets/sync-shopify', { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
-        showToast('✓ Successfully reseeded catalog & theme registry with 5 curated 3D assets!', 'success');
+        showToast(`✓ Synchronized with Shopify Admin (${data.count} live products)`, 'success');
         await loadData();
       } else {
-        showToast(data.error || 'Reseed failed', 'error');
+        showToast(data.error || 'Failed to sync with Shopify Admin', 'error');
       }
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -152,7 +153,7 @@ export const App: React.FC = () => {
             stats={stats}
             onNavigateToIngest={() => { setEditingAsset(null); setCurrentTab('ingest'); }}
             onNavigateToCatalog={() => setCurrentTab('catalog')}
-            onReseedCatalog={handleReseedCatalog}
+            onSyncFromShopify={handleSyncFromShopify}
           />
         )}
 
@@ -163,8 +164,15 @@ export const App: React.FC = () => {
             onEditAsset={handleEditAsset}
             onPreviewAsset={(asset) => setPreviewAsset(asset)}
             onNavigateToIngest={() => { setEditingAsset(null); setCurrentTab('ingest'); }}
-            onReseedCatalog={handleReseedCatalog}
+            onSyncFromShopify={handleSyncFromShopify}
             isSyncingId={isSyncingId}
+          />
+        )}
+
+        {currentTab === 'bundle' && (
+          <BundleBuilderTab
+            catalogAssets={assets}
+            onToast={showToast}
           />
         )}
 

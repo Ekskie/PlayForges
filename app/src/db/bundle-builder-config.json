@@ -1,0 +1,99 @@
+{
+  "kicker": "Interactive Custom Kit",
+  "heading": "Modular 3D Environment Bundle Builder",
+  "subheading": "Assemble complete scene kits with real-time 3D inspection and save 25% on combined licensing.",
+  "discountPercentage": 25,
+  "currencySymbol": "₱",
+  "steps": [
+    {
+      "id": "step_1",
+      "stepNumber": 1,
+      "stepBadge": "Step 1",
+      "title": "Environment & Prop Base",
+      "options": [
+        {
+          "id": "opt_tindahan",
+          "name": "Tindahan ni Mama",
+          "handle": "tindahan-ni-mama",
+          "price": 39,
+          "polycount": 1021,
+          "modelFilename": "pf-upload-1791730951473-tindahan-ni-mama.glb",
+          "engine": "UE5 / Unity / Godot",
+          "texture": "4K PBR (Packed ORM)",
+          "license": "Commercial Royalty-Free"
+        },
+        {
+          "id": "opt_1791851074533",
+          "name": "Batang Kalye",
+          "handle": "batang-kalye",
+          "price": 59,
+          "polycount": 8108,
+          "modelFilename": "pf-upload-1791850430200-batang_kalye.glb",
+          "engine": "Unreal Engine 5 / Unity / Godot",
+          "texture": "4K PBR",
+          "license": "Commercial Royalty-Free"
+        }
+      ]
+    },
+    {
+      "id": "step_2",
+      "stepNumber": 2,
+      "stepBadge": "Step 2",
+      "title": "Hero Character / Avatar",
+      "options": [
+        {
+          "id": "opt_totoy",
+          "name": "Totoy (3D Chibi Hero)",
+          "handle": "totoy-a-3d-chibi-character",
+          "price": 50,
+          "polycount": 2028,
+          "modelFilename": "pf-upload-1791716168026-totoy.glb",
+          "engine": "UE5 / Unity / Godot",
+          "texture": "4K PBR (Humanoid Bones)",
+          "license": "Commercial Royalty-Free"
+        },
+        {
+          "id": "opt_kalbo",
+          "name": "Chibi Template (Base Mesh)",
+          "handle": "kalbo",
+          "price": 39,
+          "polycount": 1320,
+          "modelFilename": "pf-upload-1791826067874-kalbo.glb",
+          "engine": "UE5 / Unity / Godot",
+          "texture": "2K Clean Base",
+          "license": "Commercial Royalty-Free"
+        }
+      ]
+    },
+    {
+      "id": "step_3",
+      "stepNumber": 3,
+      "stepBadge": "Step 3",
+      "title": "Hardware & Tech Prop",
+      "options": [
+        {
+          "id": "opt_motor",
+          "name": "Futuristic Motor",
+          "handle": "the-inventory-not-tracked-snowboard",
+          "price": 250,
+          "polycount": 10336,
+          "modelFilename": "pf-upload-1791824980791-motor_.glb",
+          "engine": "UE5 / Unity / Godot",
+          "texture": "4K PBR Metallic",
+          "license": "Commercial Royalty-Free"
+        },
+        {
+          "id": "opt_computer",
+          "name": "Computer Desktop Station",
+          "handle": "denn-computer",
+          "price": 120,
+          "polycount": 86272,
+          "modelFilename": "pf-upload-1791739889486-denn_computer.glb",
+          "engine": "UE5 / Unity / Godot",
+          "texture": "4K PBR High-Poly DCC",
+          "license": "Commercial Royalty-Free"
+        }
+      ]
+    }
+  ]
+}

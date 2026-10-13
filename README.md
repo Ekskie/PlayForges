@@ -2,9 +2,15 @@
 
 > **"Game-ready assets for worlds worth building."**
 
-PlayForge is a custom, production-grade Shopify Online Store 2.0 theme built for an online marketplace selling **game-ready 3D assets** to indie game developers, environment artists, and studios.
+PlayForge is a custom, production-grade Shopify Online Store 2.0 theme built for an online marketplace selling **game-ready 3D assets** to indie game developers, environment artists, and studios within an original, dark viewport design system featuring **Industrial Forge Orange (`#FF5A1F`)** accents over dark charcoal surfaces (`#0D0E12`).
 
-The visual direction combines the technical asset browsing of **Poly Haven** and the real-time 3D inspection of **Sketchfab** within an original, dark viewport design system featuring **Industrial Forge Orange (`#FF5A1F`)** accents over dark charcoal surfaces (`#0D0E12`).
+### 🎮 The Creator Vision & Origin Story
+PlayForge was born out of a personal passion for **indie game development**. As an aspiring game developer and 3D artist actively learning the craft, the creator faced the persistent problem of finding 3D models online that are truly game-ready. Most stores sell un-retopologized high-poly meshes that tank game frame rates.
+
+PlayForge was built with a triple-purpose vision:
+1. **Game-Ready Marketplace:** A curated store delivering engine-verified, budget-conscious 3D assets.
+2. **Living Interactive Portfolio:** A real-time WebGL showcase demonstrating 3D modeling, environment art, and technical pipeline craft directly in the browser.
+3. **Commission & Freelance Gateway:** A direct contact bridge for indie studios and developers looking to commission bespoke 3D props, modular environments, and optimized game assets.
 
 ---
 
@@ -113,12 +119,26 @@ PlayForge introduces 7 custom Shopify sections with full Theme Editor schemas:
 Located in `/app`, the **PlayForge Asset Engine** is an embedded Shopify Admin app built with:
 - **Frontend**: Vite + React 18 + TypeScript + Lucide Icons
 - **Backend**: Node.js + Express
-- **Database & ORM**: MySQL + Drizzle ORM (`drizzle-orm/mysql2`) with relational schema and migrations
-- **Scoring Engine**: 3D Pipeline Readiness Scoring Engine (benchmarks polygon budgets, LOD hierarchies, and PBR textures)
-- **Storefront Sync**: 1-Click synchronization to Shopify Product Metafields under `custom.*`, feeding the public PlayForge theme (Part 1).
+- **Database & ORM**: MySQL + Drizzle ORM (`drizzle-orm/mysql2`) with relational schema, migrations, and in-memory test fallback
+- **Automated Mesh Telemetry (`glbAnalyzer.ts`)**: Direct binary `.glb` chunk parsing that automatically extracts exact polygon/triangle counts, vertex budgets, materials, and skeletal rigs without manual data entry—preventing human typos.
+- **Scoring Engine (`scoringEngine.ts`)**: 3D Pipeline Readiness Scoring Engine (benchmarks polygon budgets, LOD hierarchies, and PBR textures into Tiers S, A, B, and C)
+- **Storefront Sync (`shopifySync.ts`)**: 1-Click synchronization to Shopify Product Metafields under `custom.*`, feeding the public PlayForge theme (Part 1).
 - **Audit Trail**: Activity logging tracking all ingestions, quality evaluations, and syncs.
 
 See [`APP_DECISIONS.md`](./APP_DECISIONS.md) for full architecture rationale, schema diagrams, and engineering tradeoffs.
+
+---
+
+## Future Vision & Roadmap ("What We'd Improve with More Time")
+
+1. **Multi-Format 3D Ingestion Pipeline (`.fbx`, `.obj`, `.blend`)**:
+   - Automated conversion worker to allow uploading raw `.fbx`, `.obj`, or `.blend` files, parsing topologies and compiling web-optimized `.glb` preview proxies on the fly.
+2. **Post-Purchase Download Selector**:
+   - Allowing buyers to select their download format at checkout (e.g. Maya/Unreal `.fbx`, Godot `.glb`, or native `.blend` source files).
+3. **Catalog Scaling & Library Expansion**:
+   - Ingesting a larger library of game-ready assets across characters, modular sci-fi/fantasy environments, and interactive props.
+4. **Automated Server-Side Draco Mesh Compression & Blender LODs**:
+   - Headless background decimation generating LOD1/LOD2 meshes and Draco-compressing geometry for 70%+ smaller downloads.
 
 ---
 

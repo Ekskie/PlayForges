@@ -127,7 +127,7 @@
         "kicker": "Curated Catalog",
         "heading": "Featured Assets",
         "subheading": "Inspected and verified 3D assets ready for deployment into modern real-time game engines.",
-        "collection": "automated-collection",
+        "collection": "batang-kalye",
         "products_to_show": 7,
         "view_all_label": "Browse catalog",
         "view_all_link": "shopify://collections/all",
@@ -139,11 +139,12 @@
       "type": "playforge-featured-collection",
       "settings": {
         "kicker": "Featured Collection",
-        "heading": "Post-Apocalyptic City",
-        "description": "Complete modular environment collection with clean topology, calibrated PBR shaders, and native engine prefabs.",
-        "model_url": "",
+        "heading": "Batang Kalye",
+        "description": "A 3D Tayaan Filipino Game Assets. Complete modular kit featuring real-time rigged characters, cultural environment props, and game-ready topology.",
+        "collection": "batang-kalye",
+        "model_url": "pf-upload-1791850430200-batang_kalye.glb",
         "cta_label": "Explore collection",
-        "cta_link": "shopify://collections/all",
+        "cta_link": "shopify://collections/batang-kalye",
         "padding_top": 48,
         "padding_bottom": 48
       }
@@ -218,7 +219,6 @@
     },
     "playforge_bundle": {
       "type": "playforge-bundle-builder",
-      "disabled": true,
       "settings": {
         "kicker": "Interactive Custom Kit",
         "heading": "Modular 3D Environment Bundle Builder",

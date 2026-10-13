@@ -22,117 +22,18 @@ export interface RegistryAssetInput {
   licenseType: string;
 }
 
-const defaultPresets: Record<string, RegistryAssetInput> = {
-  'totoy-a-3d-chibi-character': {
-    handle: 'totoy-a-3d-chibi-character',
-    title: 'Totoy a 3D chibi character',
-    category: 'Characters',
-    modelFilename: 'pf-upload-1791716298416-totoy.glb',
-    polycount: 2028,
-    lodCount: 3,
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    assetFormat: 'GLB / FBX / OBJ / BLEND',
-    textureResolution: '4K PBR',
-    isRigged: true,
-    animationClips: 8,
-    licenseType: 'Commercial Royalty-Free'
-  },
-  'the-complete-snowboard': {
-    handle: 'the-complete-snowboard',
-    title: 'Mgabata — 3D Chibi Hero Character',
-    category: 'Characters',
-    modelFilename: 'pf-upload-1791716298416-totoy.glb',
-    polycount: 18400,
-    lodCount: 3,
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    assetFormat: 'GLB / FBX / OBJ / BLEND',
-    textureResolution: '4K PBR',
-    isRigged: true,
-    animationClips: 6,
-    licenseType: 'Commercial Royalty-Free'
-  },
-  'the-collection-snowboard-liquid': {
-    handle: 'the-collection-snowboard-liquid',
-    title: 'Autonomous Recon Drone — Unit 04',
-    category: 'Vehicles',
-    modelFilename: 'pf-model-drone.glb',
-    polycount: 14400,
-    lodCount: 4,
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    assetFormat: 'GLB / FBX / OBJ / BLEND',
-    textureResolution: '4K PBR Packed ORM',
-    isRigged: true,
-    animationClips: 8,
-    licenseType: 'Commercial Royalty-Free'
-  },
-  'the-collection-snowboard-hydrogen': {
-    handle: 'the-collection-snowboard-hydrogen',
-    title: 'Titan Heavy Combat Operative',
-    category: 'Characters',
-    modelFilename: 'pf-model-astronaut.glb',
-    polycount: 42800,
-    lodCount: 3,
-    engineSupport: 'Unreal Engine 5 / Unity',
-    assetFormat: 'FBX / GLB / BLEND',
-    textureResolution: '4K PBR Packed ORM',
-    isRigged: true,
-    animationClips: 14,
-    licenseType: 'Commercial Royalty-Free'
-  },
-  'the-collection-snowboard-oxygen': {
-    handle: 'the-collection-snowboard-oxygen',
-    title: 'Aero Tactical Flight Helmet',
-    category: 'Props',
-    modelFilename: 'pf-model-helmet.glb',
-    polycount: 9800,
-    lodCount: 3,
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    assetFormat: 'GLB / OBJ / FBX',
-    textureResolution: '2K PBR Balanced',
-    isRigged: false,
-    animationClips: 0,
-    licenseType: 'Commercial Royalty-Free'
-  },
-  'the-3p-fulfilled-snowboard': {
-    handle: 'the-3p-fulfilled-snowboard',
-    title: 'Cyberpunk Industrial Generator Module',
-    category: 'Environment',
-    modelFilename: 'pf-live-drone-custom.glb',
-    polycount: 78000,
-    lodCount: 2,
-    engineSupport: 'Unreal Engine 5 / Unity',
-    assetFormat: 'FBX / GLB',
-    textureResolution: '4K PBR Packed ORM',
-    isRigged: false,
-    animationClips: 0,
-    licenseType: 'Commercial Royalty-Free'
-  },
-  'mgabata': {
-    handle: 'mgabata',
-    title: 'Mgabata — 3D Chibi Hero Character',
-    category: 'Characters',
-    modelFilename: 'pf-upload-1791716298416-totoy.glb',
-    polycount: 18400,
-    lodCount: 3,
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    assetFormat: 'GLB / FBX / OBJ / BLEND',
-    textureResolution: '4K PBR',
-    isRigged: true,
-    animationClips: 6,
-    licenseType: 'Commercial Royalty-Free'
-  }
-};
+const defaultPresets: Record<string, RegistryAssetInput> = {};
 
 function loadRegistryMap(): Record<string, RegistryAssetInput> {
   try {
     if (fs.existsSync(registryMapPath)) {
       const data = fs.readFileSync(registryMapPath, 'utf-8');
-      return { ...defaultPresets, ...JSON.parse(data) };
+      return JSON.parse(data);
     }
   } catch (err) {
-    // fallback to presets
+    // fallback
   }
-  return { ...defaultPresets };
+  return {};
 }
 
 function saveRegistryMap(map: Record<string, RegistryAssetInput>): void {

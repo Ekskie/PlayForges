@@ -64,6 +64,7 @@ export const AssetFormTab: React.FC<AssetFormTabProps> = ({
 
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [photoUploadStatus, setPhotoUploadStatus] = useState<string | null>(null);
+  const [isPullingShopify, setIsPullingShopify] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -71,12 +72,36 @@ export const AssetFormTab: React.FC<AssetFormTabProps> = ({
   // Sync state if initialAsset changes (e.g. clicking Edit or + Add 3D from Catalog)
   useEffect(() => {
     if (initialAsset) {
+      let parsedGallery: GalleryImage[] = [];
+      if (initialAsset.galleryImages) {
+        try {
+          parsedGallery = Array.isArray(initialAsset.galleryImages)
+            ? initialAsset.galleryImages
+            : JSON.parse(initialAsset.galleryImages);
+        } catch {
+          parsedGallery = [];
+        }
+      }
+
+      const rawPoster = initialAsset.posterUrl || '';
+      const effectivePoster = rawPoster && !rawPoster.includes('unsplash')
+        ? rawPoster
+        : (parsedGallery.length > 0 ? parsedGallery[0].url : rawPoster || '');
+
+      if (parsedGallery.length === 0 && effectivePoster && !effectivePoster.includes('unsplash')) {
+        parsedGallery = [{
+          url: effectivePoster,
+          label: 'Primary Cover',
+          filename: effectivePoster.split('/').pop()?.split('?')[0] || 'cover.png'
+        }];
+      }
+
       setFormData({
         title: initialAsset.title || '',
         description: initialAsset.description || `Game-ready 3D asset featuring clean topology, PBR materials, multi-engine export, and verified runtime LOD budgets.`,
         category: initialAsset.category || 'characters',
         modelUrl: initialAsset.modelUrl || '',
-        posterUrl: initialAsset.posterUrl || 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=800',
+        posterUrl: effectivePoster,
         assetFormat: initialAsset.assetFormat || 'GLB / FBX / OBJ / BLEND',
         engineSupport: initialAsset.engineSupport || 'Unreal Engine 5 / Unity / Godot',
         polycount: initialAsset.polycount !== undefined ? initialAsset.polycount : 0,
@@ -96,16 +121,8 @@ export const AssetFormTab: React.FC<AssetFormTabProps> = ({
       });
       setPreviewModelUrl(initialAsset.modelUrl || '');
       setUploadedFileName(initialAsset.modelUrl ? initialAsset.modelUrl.split('/').pop() : null);
-      if (initialAsset.galleryImages) {
-        try {
-          const parsed = Array.isArray(initialAsset.galleryImages)
-            ? initialAsset.galleryImages
-            : JSON.parse(initialAsset.galleryImages);
-          setGalleryImages(parsed);
-        } catch {
-          setGalleryImages([]);
-        }
-      }
+      setGalleryImages(parsedGallery);
+
       if (initialAsset.polycount && initialAsset.polycount > 0) {
         setMeshAudit({
           triangles: initialAsset.polycount,
@@ -369,6 +386,44 @@ export const AssetFormTab: React.FC<AssetFormTabProps> = ({
     setGalleryImages(prev => prev.map((img, i) => i === index ? { ...img, label } : img));
   };
 
+  const handlePullFromShopify = async () => {
+    if (!initialAsset?.id) return;
+    setIsPullingShopify(true);
+    try {
+      const res = await fetch(`/api/assets/${initialAsset.id}/pull-shopify`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.asset) {
+        const fresh = data.asset;
+        setFormData(prev => ({
+          ...prev,
+          title: fresh.title || prev.title,
+          description: fresh.description || prev.description,
+          price: fresh.price || prev.price,
+          compareAtPrice: fresh.compareAtPrice || prev.compareAtPrice,
+          vendor: fresh.vendor || prev.vendor,
+          status: fresh.status || prev.status,
+          posterUrl: fresh.posterUrl || prev.posterUrl,
+          modelUrl: fresh.modelUrl || prev.modelUrl,
+          category: fresh.category || prev.category
+        }));
+        if (fresh.galleryImages && Array.isArray(fresh.galleryImages)) {
+          setGalleryImages(fresh.galleryImages);
+        }
+        if (fresh.modelUrl) {
+          setPreviewModelUrl(fresh.modelUrl);
+          setUploadedFileName(fresh.modelUrl.split('/').pop() || null);
+        }
+        setPhotoUploadStatus(`✓ Pulled ${fresh.galleryImages?.length || 0} photos and latest metadata directly from Shopify Admin!`);
+      } else {
+        alert(data.error || 'Failed to pull from Shopify');
+      }
+    } catch (e: any) {
+      alert(`Error pulling from Shopify: ${e.message}`);
+    } finally {
+      setIsPullingShopify(false);
+    }
+  };
+
   const handleSubmit = (andSync: boolean) => {
     onSave({ ...formData, galleryImages }, andSync);
   };
@@ -391,6 +446,20 @@ export const AssetFormTab: React.FC<AssetFormTabProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {initialAsset && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={isPullingShopify || isSaving}
+              onClick={handlePullFromShopify}
+              title="Pull latest live product images, description, price, and 3D media directly from Shopify Admin"
+              style={{ borderColor: 'rgba(56, 189, 248, 0.45)', color: '#38bdf8' }}
+            >
+              <RefreshCw size={13} style={{ animation: isPullingShopify ? 'spin 0.8s linear infinite' : 'none' }} />
+              <span>{isPullingShopify ? 'Pulling from Shopify...' : 'Pull from Shopify'}</span>
+            </button>
+          )}
+
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -402,7 +471,7 @@ export const AssetFormTab: React.FC<AssetFormTabProps> = ({
           <button
             type="button"
             className="btn btn-secondary btn-sm"
-            disabled={isSaving || isUploading}
+            disabled={isSaving || isUploading || isPullingShopify}
             onClick={() => handleSubmit(false)}
           >
             <Save size={14} />
@@ -412,7 +481,7 @@ export const AssetFormTab: React.FC<AssetFormTabProps> = ({
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            disabled={isSaving || isUploading}
+            disabled={isSaving || isUploading || isPullingShopify}
             onClick={() => handleSubmit(true)}
           >
             <RefreshCw size={14} style={{ animation: isSaving ? 'spin 0.8s linear infinite' : 'none' }} />

@@ -30,7 +30,7 @@
 {% endcomment %}
 
 {%- liquid
-  assign uid = viewer_id | default: 'demo' | append: '-' | append: 'now' | date: '%N' | slice: 0, 6
+  assign uid = viewer_id | default: 'demo' | handleize
   assign has_model = false
   if model_url != blank
     assign has_model = true

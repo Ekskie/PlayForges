@@ -327,8 +327,8 @@
               </li>
             {%- endfor -%}
             <li>
-              <a href="{{ routes.collections_url }}" class="header__menu-item list-menu__item link link--text focus-inset">
-                <span>Collections</span>
+              <a href="{{ routes.collections_url }}" class="header__menu-item list-menu__item link link--text focus-inset{% if request.page_type == 'list-collections' %} list-menu__item--active{% endif %}"{% if request.page_type == 'list-collections' %} aria-current="page"{% endif %}>
+                <span {%- if request.page_type == 'list-collections' %} class="header__active-menu-item"{% endif %}>Collections</span>
               </a>
             </li>
           </ul>
@@ -383,8 +383,8 @@
               </li>
             {%- endfor -%}
             <li>
-              <a href="{{ routes.collections_url }}" class="header__menu-item list-menu__item link link--text focus-inset">
-                <span>Collections</span>
+              <a href="{{ routes.collections_url }}" class="header__menu-item list-menu__item link link--text focus-inset{% if request.page_type == 'list-collections' %} list-menu__item--active{% endif %}"{% if request.page_type == 'list-collections' %} aria-current="page"{% endif %}>
+                <span {%- if request.page_type == 'list-collections' %} class="header__active-menu-item"{% endif %}>Collections</span>
               </a>
             </li>
           </ul>

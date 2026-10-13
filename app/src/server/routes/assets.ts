@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
 import { db, schema, isDbConnected } from '../../db/index.js';
 import { calculatePipelineScore } from '../services/scoringEngine.js';
-import { syncAssetToShopify, createShopifyProduct, sanitizeShopDomain } from '../services/shopifySync.js';
+import { syncAssetToShopify, createShopifyProduct, sanitizeShopDomain, fetchLiveShopifyProducts } from '../services/shopifySync.js';
 import { logActivity } from '../services/auditLogger.js';
 import { registerAssetInTheme } from '../services/modelRegistry.js';
 import { analyzeGlbFile } from '../services/glbAnalyzer.js';
@@ -33,134 +34,35 @@ const upload = multer({
 
 const router = Router();
 
-// Robust in-memory asset store for instant evaluator preview
-let inMemoryAssets: any[] = [
-  {
-    id: 1,
-    shopId: 1,
-    presetId: 1,
-    shopifyProductId: 'gid://shopify/Product/10346890035498',
-    handle: 'the-complete-snowboard',
-    title: 'Mgabata — 3D Chibi Hero Character',
-    category: 'characters',
-    modelUrl: '/assets/pf-upload-1791716298416-totoy.glb',
-    posterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-    assetFormat: 'GLB / FBX / OBJ / BLEND',
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    polycount: 18400,
-    lodCount: 3,
-    textureResolution: '4K PBR',
-    isRigged: true,
-    animationClips: 6,
-    licenseType: 'Commercial Royalty-Free',
-    price: '29.00',
-    syncStatus: 'synced',
-    lastSyncedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    shopId: 1,
-    presetId: 1,
-    shopifyProductId: 'gid://shopify/Product/10346890363178',
-    handle: 'the-collection-snowboard-liquid',
-    title: 'Autonomous Recon Drone — Unit 04',
-    category: 'vehicles',
-    modelUrl: '/assets/pf-model-drone.glb',
-    posterUrl: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=800&auto=format&fit=crop&q=80',
-    assetFormat: 'GLB / FBX / OBJ / BLEND',
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    polycount: 14400,
-    lodCount: 4,
-    textureResolution: '4K PBR',
-    isRigged: true,
-    animationClips: 8,
-    licenseType: 'Commercial Royalty-Free',
-    price: '35.00',
-    syncStatus: 'synced',
-    lastSyncedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 3,
-    shopId: 1,
-    presetId: 1,
-    shopifyProductId: 'gid://shopify/Product/10346889904426',
-    handle: 'the-collection-snowboard-hydrogen',
-    title: 'Titan Heavy Combat Operative',
-    category: 'characters',
-    modelUrl: '/assets/pf-model-astronaut.glb',
-    posterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-    assetFormat: 'FBX / GLB / BLEND',
-    engineSupport: 'Unreal Engine 5 / Unity',
-    polycount: 42800,
-    lodCount: 3,
-    textureResolution: '4K PBR',
-    isRigged: true,
-    animationClips: 14,
-    licenseType: 'Commercial Royalty-Free',
-    price: '48.00',
-    syncStatus: 'synced',
-    lastSyncedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 4,
-    shopId: 1,
-    presetId: 2,
-    shopifyProductId: 'gid://shopify/Product/10346890264874',
-    handle: 'the-collection-snowboard-oxygen',
-    title: 'Aero Tactical Flight Helmet',
-    category: 'props',
-    modelUrl: '/assets/pf-model-helmet.glb',
-    posterUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800&auto=format&fit=crop&q=80',
-    assetFormat: 'GLB / OBJ / FBX',
-    engineSupport: 'Unreal Engine 5 / Unity / Godot',
-    polycount: 9800,
-    lodCount: 3,
-    textureResolution: '2K PBR',
-    isRigged: false,
-    animationClips: 0,
-    licenseType: 'Commercial Royalty-Free',
-    price: '22.00',
-    syncStatus: 'synced',
-    lastSyncedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 5,
-    shopId: 1,
-    presetId: 3,
-    shopifyProductId: 'gid://shopify/Product/10346890330410',
-    handle: 'the-3p-fulfilled-snowboard',
-    title: 'Cyberpunk Industrial Generator Module',
-    category: 'environment',
-    modelUrl: '/assets/pf-live-drone-custom.glb',
-    posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
-    assetFormat: 'FBX / GLB',
-    engineSupport: 'Unreal Engine 5 / Unity',
-    polycount: 78000,
-    lodCount: 2,
-    textureResolution: '4K PBR',
-    isRigged: false,
-    animationClips: 0,
-    licenseType: 'Commercial Royalty-Free',
-    price: '39.00',
-    syncStatus: 'synced',
-    lastSyncedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
+// In-memory asset store synchronized with live Shopify Admin
+let inMemoryAssets: any[] = [];
 
-let nextAssetId = 6;
+export function getInMemoryAssets() {
+  return inMemoryAssets;
+}
+
+let nextAssetId = 7;
 
 // Complete live store inventory from Shopify Admin (playforges-kkii5nq8)
 export const STORE_PRODUCTS_INVENTORY: any[] = [
+  {
+    id: '10356537229610',
+    title: 'Crane',
+    handle: 'crane',
+    variants: [{ price: '39.00' }],
+    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '10355401785642',
+    title: 'Computer Desktop',
+    handle: 'denn-computer',
+    variants: [{ price: '39.00' }],
+    images: [{ src: 'https://images.unsplash.com/photo-1589254065878-42c9da997008?w=800' }],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
   {
     id: '10355313049898',
     title: 'Tindahan ni Mama',
@@ -189,253 +91,246 @@ export const STORE_PRODUCTS_INVENTORY: any[] = [
     updated_at: new Date().toISOString()
   },
   {
-    id: '10346890363178',
-    title: 'The Collection Snowboard: Liquid',
-    handle: 'the-collection-snowboard-liquid',
-    variants: [{ price: '749.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346890330410',
-    title: 'The 3p Fulfilled Snowboard',
-    handle: 'the-3p-fulfilled-snowboard',
-    variants: [{ price: '2629.95' }],
+    id: '10346889707818',
+    title: 'Futuristic Motor',
+    handle: 'the-inventory-not-tracked-snowboard',
+    variants: [{ price: '65.00' }],
     images: [{ src: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346890297642',
-    title: 'The Multi-managed Snowboard',
-    handle: 'the-multi-managed-snowboard',
-    variants: [{ price: '629.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346890264874',
-    title: 'The Collection Snowboard: Oxygen',
-    handle: 'the-collection-snowboard-oxygen',
-    variants: [{ price: '1025.00' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1589254065878-42c9da997008?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346890232106',
-    title: 'The Multi-location Snowboard',
-    handle: 'the-multi-location-snowboard',
-    variants: [{ price: '729.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346890068266',
-    title: 'The Out of Stock Snowboard',
-    handle: 'the-out-of-stock-snowboard',
-    variants: [{ price: '885.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346890035498',
-    title: 'The Complete Snowboard',
-    handle: 'the-complete-snowboard',
-    variants: [{ price: '699.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346890002730',
-    title: 'The Videographer Snowboard',
-    handle: 'the-videographer-snowboard',
-    variants: [{ price: '885.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346889969962',
-    title: 'The Hidden Snowboard',
-    handle: 'the-hidden-snowboard',
-    variants: [{ price: '749.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346889937194',
-    title: 'Selling Plans Ski Wax',
-    handle: 'selling-plans-ski-wax',
-    variants: [{ price: '24.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346889904426',
-    title: 'The Collection Snowboard: Hydrogen',
-    handle: 'the-collection-snowboard-hydrogen',
-    variants: [{ price: '600.00' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346889871658',
-    title: 'The Archived Snowboard',
-    handle: 'the-archived-snowboard',
-    variants: [{ price: '500.00' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346889838890',
-    title: 'The Compare at Price Snowboard',
-    handle: 'the-compare-at-price-snowboard',
-    variants: [{ price: '785.95' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '10346889806122',
-    title: 'The Draft Snowboard',
-    handle: 'the-draft-snowboard',
-    variants: [{ price: '650.00' }],
-    images: [{ src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800' }],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
 ];
 
 /**
+ * Synchronizes local asset catalog and DB strictly with live products from Shopify Admin.
+ * Purges any local records that no longer exist in Shopify Admin.
+ */
+export async function syncCatalogFromShopify(cleanShop: string, adminToken?: string): Promise<{ success: boolean; count: number; assets: any[]; error?: string }> {
+  try {
+    let liveProducts: any[] = [];
+    if (adminToken && adminToken.length >= 20) {
+      liveProducts = await fetchLiveShopifyProducts(cleanShop, adminToken);
+    }
+
+    if (!liveProducts || liveProducts.length === 0) {
+      // Fallback to theme dev server products.json or STORE_PRODUCTS_INVENTORY
+      try {
+        const themeRes = await fetch('http://127.0.0.1:9292/products.json');
+        if (themeRes.ok) {
+          const data = await themeRes.json();
+          if (data?.products && data.products.length > 0) {
+            liveProducts = data.products.map((p: any) => ({
+              id: Number(p.id),
+              shopifyProductId: `gid://shopify/Product/${p.id}`,
+              handle: p.handle,
+              title: p.title,
+              description: p.body_html || '',
+              vendor: p.vendor || 'PlayForges',
+              status: 'Active',
+              price: p.variants?.[0]?.price || '39.00',
+              compareAtPrice: p.variants?.[0]?.compare_at_price || '',
+              inventoryQuantity: 1,
+              posterUrl: p.images?.[0]?.src || '',
+              galleryImages: p.images?.map((img: any) => img.src) || []
+            }));
+          }
+        }
+      } catch {}
+
+      if (!liveProducts || liveProducts.length === 0) {
+        liveProducts = STORE_PRODUCTS_INVENTORY.map((p: any) => ({
+          id: Number(p.id),
+          shopifyProductId: `gid://shopify/Product/${p.id}`,
+          handle: p.handle,
+          title: p.title,
+          price: p.variants?.[0]?.price || '39.00',
+          posterUrl: p.images?.[0]?.src || '',
+          galleryImages: []
+        }));
+      }
+    }
+
+    const liveSpGids = new Set(liveProducts.map(p => p.shopifyProductId));
+    const liveNumericIds = new Set(liveProducts.map(p => String(p.id)));
+
+    // 1. Purge any stale DB records that are not in live Shopify
+    if (isDbConnected() && db) {
+      try {
+        const allDbAssets = await db.select().from(schema.assetCatalog);
+        for (const row of allDbAssets) {
+          const isLive = (row.shopifyProductId && liveSpGids.has(row.shopifyProductId)) ||
+                         (row.shopifyProductId && liveNumericIds.has(row.shopifyProductId.replace('gid://shopify/Product/', ''))) ||
+                         (row.id && liveNumericIds.has(String(row.id)));
+          if (!isLive) {
+            await db.delete(schema.assetEvaluations).where(eq(schema.assetEvaluations.assetId, row.id));
+            await db.delete(schema.assetCatalog).where(eq(schema.assetCatalog.id, row.id));
+          }
+        }
+      } catch (e: any) {
+        console.warn('[SyncShopify] DB cleanup notice:', e.message);
+      }
+    }
+
+    // 2. Load registry mapping from snippets/model-registry-map.json
+    let registryMap: Record<string, any> = {};
+    try {
+      const regPath = path.resolve(__dirname, '../../db/model-registry-map.json');
+      if (fs.existsSync(regPath)) {
+        registryMap = JSON.parse(fs.readFileSync(regPath, 'utf-8'));
+      }
+    } catch {}
+
+    // 3. Merge each live product with local DB or registry 3D specifications
+    const syncedAssets: any[] = [];
+    for (const lp of liveProducts) {
+      const spGid = lp.shopifyProductId;
+      let existing = inMemoryAssets.find(a =>
+        a.shopifyProductId === spGid ||
+        Number(a.id) === Number(lp.id) ||
+        a.handle === lp.handle ||
+        (lp.title && a.title.toLowerCase().trim() === lp.title.toLowerCase().trim())
+      );
+
+      if (!existing && isDbConnected() && db) {
+        try {
+          const rows = await db.select().from(schema.assetCatalog).where(eq(schema.assetCatalog.shopifyProductId, spGid)).limit(1);
+          if (rows.length > 0) existing = rows[0];
+        } catch {}
+      }
+
+      const reg = registryMap[lp.handle] || {};
+
+      const merged: any = {
+        id: Number(lp.id) || existing?.id || Date.now(),
+        shopId: 1,
+        shopifyProductId: spGid,
+        handle: lp.handle,
+        title: lp.title,
+        description: lp.description || existing?.description || '',
+        vendor: lp.vendor || existing?.vendor || 'PlayForges',
+        status: lp.status || existing?.status || 'Active',
+        price: lp.price || existing?.price || '39.00',
+        compareAtPrice: lp.compareAtPrice || existing?.compareAtPrice || '',
+        inventoryQuantity: lp.inventoryQuantity ?? existing?.inventoryQuantity ?? 1,
+        posterUrl: lp.posterUrl || existing?.posterUrl || (lp.galleryImages?.[0] || ''),
+        galleryImages: (lp.galleryImages && lp.galleryImages.length > 0) ? lp.galleryImages : (existing?.galleryImages || []),
+        modelUrl: existing?.modelUrl || reg.modelFilename || lp.modelUrl || '',
+        polycount: existing?.polycount || reg.polycount || lp.polycount || 2028,
+        lodCount: existing?.lodCount ?? reg.lodCount ?? lp.lodCount ?? 3,
+        engineSupport: existing?.engineSupport || reg.engineSupport || lp.engineSupport || 'Unreal Engine 5 / Unity / Godot',
+        assetFormat: existing?.assetFormat || reg.assetFormat || lp.assetFormat || 'GLB / FBX',
+        textureResolution: existing?.textureResolution || reg.textureResolution || lp.textureResolution || '4K PBR',
+        isRigged: existing?.isRigged ?? reg.isRigged ?? lp.isRigged ?? false,
+        animationClips: existing?.animationClips ?? reg.animationClips ?? lp.animationClips ?? 0,
+        licenseType: existing?.licenseType || reg.licenseType || lp.licenseType || 'Commercial Royalty-Free',
+        category: existing?.category || (reg.category ? reg.category.toLowerCase() : '') || lp.category || 'characters',
+        syncStatus: (existing?.modelUrl || reg.modelFilename || lp.modelUrl) ? 'synced' : 'draft',
+        createdAt: existing?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      merged.evaluation = calculatePipelineScore(merged);
+
+      // Save/update in DB
+      if (isDbConnected() && db) {
+        try {
+          const existsInDb = await db.select().from(schema.assetCatalog).where(eq(schema.assetCatalog.id, merged.id)).limit(1);
+          if (existsInDb.length > 0) {
+            await db.update(schema.assetCatalog).set({
+              title: merged.title,
+              shopifyProductId: merged.shopifyProductId,
+              modelUrl: merged.modelUrl,
+              posterUrl: merged.posterUrl,
+              galleryImages: JSON.stringify(merged.galleryImages || []),
+              price: merged.price,
+              polycount: merged.polycount,
+              lodCount: merged.lodCount,
+              engineSupport: merged.engineSupport,
+              assetFormat: merged.assetFormat,
+              textureResolution: merged.textureResolution,
+              isRigged: merged.isRigged,
+              animationClips: merged.animationClips,
+              licenseType: merged.licenseType,
+              category: merged.category,
+              syncStatus: merged.syncStatus,
+              updatedAt: new Date()
+            }).where(eq(schema.assetCatalog.id, merged.id));
+          } else {
+            await db.insert(schema.assetCatalog).values({
+              id: merged.id,
+              shopId: 1,
+              title: merged.title,
+              shopifyProductId: merged.shopifyProductId,
+              modelUrl: merged.modelUrl,
+              posterUrl: merged.posterUrl,
+              galleryImages: JSON.stringify(merged.galleryImages || []),
+              price: merged.price,
+              polycount: merged.polycount,
+              lodCount: merged.lodCount,
+              engineSupport: merged.engineSupport,
+              assetFormat: merged.assetFormat,
+              textureResolution: merged.textureResolution,
+              isRigged: merged.isRigged,
+              animationClips: merged.animationClips,
+              licenseType: merged.licenseType,
+              category: merged.category,
+              syncStatus: merged.syncStatus,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+          }
+        } catch (dbErr: any) {
+          console.warn('[SyncShopify] DB upsert notice:', dbErr.message);
+        }
+      }
+
+      // Register in theme Liquid snippet if 3D model exists
+      if (merged.modelUrl && merged.handle) {
+        registerAssetInTheme({
+          handle: merged.handle,
+          title: merged.title,
+          category: merged.category.charAt(0).toUpperCase() + merged.category.slice(1),
+          modelFilename: merged.modelUrl,
+          polycount: merged.polycount,
+          lodCount: merged.lodCount,
+          engineSupport: merged.engineSupport,
+          assetFormat: merged.assetFormat,
+          textureResolution: merged.textureResolution,
+          isRigged: merged.isRigged,
+          animationClips: merged.animationClips,
+          licenseType: merged.licenseType
+        });
+      }
+
+      syncedAssets.push(merged);
+    }
+
+    inMemoryAssets = [...syncedAssets];
+    return { success: true, count: syncedAssets.length, assets: syncedAssets };
+  } catch (err: any) {
+    console.error('[SyncShopify] Error in syncCatalogFromShopify:', err);
+    return { success: false, count: 0, assets: [], error: err.message };
+  }
+}
+
+/**
  * GET /api/assets
- * Lists all assets with search, category, tier, and sync filters.
+ * Lists all live Shopify assets with search, category, tier, and sync filters.
+ * Only returns products currently existing in Shopify Admin.
  */
 router.get('/', async (req: Request, res: Response) => {
   const { search, category, tier, status } = req.query;
+  const rawShop = (req.query.shop as string) || process.env.SHOPIFY_SHOP_DOMAIN || 'playforges-kkii5nq8.myshopify.com';
+  const cleanShop = sanitizeShopDomain(rawShop);
+  const adminToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
 
-  let list: any[] = [...inMemoryAssets];
-
-  if (isDbConnected() && db) {
-    try {
-      const rawAssets = await db.select().from(schema.assetCatalog).orderBy(desc(schema.assetCatalog.createdAt));
-      const rawEvals = await db.select().from(schema.assetEvaluations);
-      const evalMap = new Map(rawEvals.map((e: any) => [e.assetId, e]));
-
-      if (rawAssets && rawAssets.length > 0) {
-        list = rawAssets.map((r: any) => {
-          const evalRec: any = evalMap.get(r.id);
-          let parsedGallery: any[] = [];
-          if (r.galleryImages) {
-            try {
-              parsedGallery = typeof r.galleryImages === 'string' ? JSON.parse(r.galleryImages) : r.galleryImages;
-            } catch {}
-          }
-          return {
-            ...r,
-            galleryImages: parsedGallery,
-            evaluation: evalRec
-              ? {
-                  ...evalRec,
-                  alerts: JSON.parse(evalRec.alertsJson || '[]'),
-                  recommendations: JSON.parse(evalRec.recommendationsJson || '[]')
-                }
-              : calculatePipelineScore(r)
-          };
-        });
-      }
-    } catch (e: any) {
-      console.warn('[AssetsAPI] DB read error, using in-memory store:', e.message || e);
-    }
+  // Always keep catalog cleanly synchronized with live Shopify
+  if (inMemoryAssets.length === 0 || req.query.refresh === 'true') {
+    await syncCatalogFromShopify(cleanShop, adminToken);
   }
 
-  // Fetch live products from Shopify Admin or use complete store inventory
-  let shopifyProducts: any[] = STORE_PRODUCTS_INVENTORY;
-  try {
-    const themeRes = await fetch('http://127.0.0.1:9292/products.json');
-    if (themeRes.ok) {
-      const data = await themeRes.json();
-      if (data?.products && data.products.length > 0) {
-        shopifyProducts = data.products;
-      }
-    }
-  } catch (err: any) {
-    // Falls back to STORE_PRODUCTS_INVENTORY
-  }
+  let list = inMemoryAssets;
 
-  for (const sp of shopifyProducts) {
-    const spGid = `gid://shopify/Product/${sp.id}`;
-    const existingIdx = list.findIndex(a =>
-      a.shopifyProductId === spGid ||
-      a.handle === sp.handle ||
-      (sp.title && a.title.toLowerCase().includes(sp.title.toLowerCase()))
-    );
-
-    if (existingIdx !== -1) {
-      // Keep live store attributes updated
-      list[existingIdx].shopifyProductId = spGid;
-      list[existingIdx].handle = sp.handle;
-      if (sp.variants?.[0]?.price) list[existingIdx].price = sp.variants[0].price;
-      if (sp.images?.[0]?.src && !list[existingIdx].posterUrl) list[existingIdx].posterUrl = sp.images[0].src;
-    } else {
-      // If not in catalog yet, add as an editable product
-      const isTotoy = sp.title.toLowerCase().includes('totoy') || sp.handle.includes('totoy');
-      const isKalbo = sp.title.toLowerCase().includes('kalbo') || sp.handle.includes('kalbo');
-
-      const newEntry: any = {
-        id: Number(sp.id),
-        shopId: 1,
-        shopifyProductId: spGid,
-        handle: sp.handle,
-        title: sp.title,
-        category: isTotoy ? 'characters' : (isKalbo ? 'characters' : 'props'),
-        modelUrl: isTotoy ? '/assets/pf-upload-1791716298416-totoy.glb' : '',
-        posterUrl: sp.images?.[0]?.src || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800',
-        assetFormat: isTotoy ? 'GLB / FBX / OBJ / BLEND' : 'Not Attached',
-        engineSupport: isTotoy ? 'Unreal Engine 5 / Unity / Godot' : 'Pending Ingestion',
-        polycount: isTotoy ? 2028 : 0,
-        lodCount: isTotoy ? 3 : 0,
-        textureResolution: isTotoy ? '4K PBR' : 'Unassigned',
-        isRigged: isTotoy,
-        animationClips: isTotoy ? 8 : 0,
-        licenseType: 'Commercial Royalty-Free',
-        price: sp.variants?.[0]?.price || '39.00',
-        syncStatus: isTotoy ? 'synced' : 'draft',
-        createdAt: sp.created_at || new Date().toISOString(),
-        updatedAt: sp.updated_at || new Date().toISOString()
-      };
-
-      newEntry.evaluation = isTotoy
-        ? calculatePipelineScore(newEntry)
-        : {
-            overallScore: 0,
-            qualityTier: 'tier_c',
-            alerts: [{ type: 'info', code: 'NO_MESH', message: 'No 3D mesh model attached yet. Click "+ Add 3D" to upload and inspect .GLB.' }]
-          };
-
-      list.push(newEntry);
-    }
-  }
-
-  // Ensure each asset has an evaluation
-  const enriched = list.map(a => {
-    const evalData = a.evaluation || calculatePipelineScore(a);
-    return {
-      ...a,
-      evaluation: evalData
-    };
-  });
-
-  let filtered = enriched;
+  let filtered = list;
   if (search) {
     const q = (search as string).toLowerCase();
     filtered = filtered.filter(a => a.title.toLowerCase().includes(q) || (a.assetFormat && a.assetFormat.toLowerCase().includes(q)));
@@ -444,7 +339,7 @@ router.get('/', async (req: Request, res: Response) => {
     filtered = filtered.filter(a => a.category === category);
   }
   if (tier && tier !== 'all') {
-    filtered = filtered.filter(a => a.evaluation.qualityTier === tier);
+    filtered = filtered.filter(a => a.evaluation?.qualityTier === tier);
   }
   if (status && status !== 'all') {
     filtered = filtered.filter(a => a.syncStatus === status);
@@ -773,6 +668,82 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/assets/:id/pull-shopify
+ * Re-fetches the latest live product images, description, price, and 3D media directly from Shopify Admin
+ */
+router.post('/:id/pull-shopify', async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const rawShop = (req.query.shop as string) || process.env.SHOPIFY_SHOP_DOMAIN || 'playforges-kkii5nq8.myshopify.com';
+  const cleanShop = sanitizeShopDomain(rawShop);
+  const adminToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+
+  if (!adminToken || adminToken.length < 20) {
+    return res.status(400).json({ error: 'Shopify Admin token not configured.' });
+  }
+
+  try {
+    const liveProducts = await fetchLiveShopifyProducts(cleanShop, adminToken);
+    const targetProd = liveProducts.find(p => p.id === id || p.shopifyProductId === `gid://shopify/Product/${id}`);
+
+    if (!targetProd) {
+      return res.status(404).json({ error: 'Product not found on Shopify store.' });
+    }
+
+    let idx = inMemoryAssets.findIndex(a => a.id === id || a.shopifyProductId === targetProd.shopifyProductId);
+    let existing = inMemoryAssets[idx] || {};
+
+    const merged = {
+      ...existing,
+      ...targetProd,
+      id: targetProd.id,
+      modelUrl: existing.modelUrl || targetProd.modelUrl,
+      polycount: existing.polycount || targetProd.polycount || 2028,
+      lodCount: existing.lodCount || targetProd.lodCount || 3,
+      engineSupport: existing.engineSupport || targetProd.engineSupport || 'Unreal Engine 5 / Unity / Godot',
+      assetFormat: existing.assetFormat || targetProd.assetFormat || 'GLB / FBX',
+      textureResolution: existing.textureResolution || targetProd.textureResolution || '4K PBR',
+      isRigged: existing.isRigged ?? targetProd.isRigged ?? false,
+      animationClips: existing.animationClips ?? targetProd.animationClips ?? 0,
+      licenseType: existing.licenseType || targetProd.licenseType || 'Commercial Royalty-Free',
+      category: existing.category || targetProd.category || 'characters',
+      updatedAt: new Date().toISOString()
+    };
+
+    merged.evaluation = calculatePipelineScore(merged);
+
+    if (idx !== -1) {
+      inMemoryAssets[idx] = merged;
+    } else {
+      inMemoryAssets.push(merged);
+    }
+
+    if (isDbConnected() && db) {
+      try {
+        await db.update(schema.assetCatalog).set({
+          title: merged.title,
+          posterUrl: merged.posterUrl,
+          galleryImages: JSON.stringify(merged.galleryImages || []),
+          price: merged.price,
+          status: merged.status
+        }).where(eq(schema.assetCatalog.id, id));
+      } catch {}
+    }
+
+    await logActivity({
+      shopId: 1,
+      assetId: id,
+      action: 'updated',
+      summary: `Pulled live Shopify metadata for ${merged.title}`,
+      details: `Refreshed ${merged.galleryImages?.length || 0} images and core product data directly from Shopify Admin.`
+    });
+
+    res.json({ success: true, asset: merged });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * POST /api/assets/upload
  * Accepts real 3D model files (.GLB / .GLTF) and saves them to theme assets folder
  */
@@ -863,181 +834,36 @@ router.get('/shopify/products', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/assets/reseed
- * Reseeds curated 3D assets and updates theme Liquid model registry
+ * POST /api/assets/sync-shopify
+ * Synchronizes catalog directly with Shopify Admin, updating live products and removing stale records.
  */
-router.post('/reseed', async (req: Request, res: Response) => {
-  try {
-    inMemoryAssets = [
-      {
-        id: 1,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346890035498',
-        handle: 'the-complete-snowboard',
-        title: 'Mgabata — 3D Chibi Hero Character',
-        category: 'characters',
-        modelUrl: '/assets/pf-upload-1791716298416-totoy.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'GLB / FBX / OBJ / BLEND',
-        engineSupport: 'Unreal Engine 5 / Unity / Godot',
-        polycount: 18400,
-        lodCount: 3,
-        textureResolution: '4K PBR',
-        isRigged: true,
-        animationClips: 6,
-        licenseType: 'Commercial Royalty-Free',
-        price: '29.00',
-        syncStatus: 'synced',
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346890363178',
-        handle: 'the-collection-snowboard-liquid',
-        title: 'Autonomous Recon Drone — Unit 04',
-        category: 'vehicles',
-        modelUrl: '/assets/pf-model-drone.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'GLB / FBX / OBJ / BLEND',
-        engineSupport: 'Unreal Engine 5 / Unity / Godot',
-        polycount: 14400,
-        lodCount: 4,
-        textureResolution: '4K PBR',
-        isRigged: true,
-        animationClips: 8,
-        licenseType: 'Commercial Royalty-Free',
-        price: '35.00',
-        syncStatus: 'synced',
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 3,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346889904426',
-        handle: 'the-collection-snowboard-hydrogen',
-        title: 'Titan Heavy Combat Operative',
-        category: 'characters',
-        modelUrl: '/assets/pf-model-astronaut.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'FBX / GLB / BLEND',
-        engineSupport: 'Unreal Engine 5 / Unity',
-        polycount: 42800,
-        lodCount: 3,
-        textureResolution: '4K PBR',
-        isRigged: true,
-        animationClips: 14,
-        licenseType: 'Commercial Royalty-Free',
-        price: '45.00',
-        syncStatus: 'synced',
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 4,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346890264874',
-        handle: 'the-collection-snowboard-oxygen',
-        title: 'Aero Tactical Flight Helmet',
-        category: 'props',
-        modelUrl: '/assets/pf-model-helmet.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1589254065878-42c9da997008?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'GLB / OBJ / FBX',
-        engineSupport: 'Unreal Engine 5 / Unity / Godot',
-        polycount: 9800,
-        lodCount: 3,
-        textureResolution: '2K PBR',
-        isRigged: false,
-        animationClips: 0,
-        licenseType: 'Commercial Royalty-Free',
-        price: '19.00',
-        syncStatus: 'synced',
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 5,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346890330410',
-        handle: 'the-3p-fulfilled-snowboard',
-        title: 'Cyberpunk Industrial Generator Module',
-        category: 'environment',
-        modelUrl: '/assets/pf-live-drone-custom.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'FBX / GLB',
-        engineSupport: 'Unreal Engine 5 / Unity',
-        polycount: 78000,
-        lodCount: 2,
-        textureResolution: '4K PBR',
-        isRigged: false,
-        animationClips: 0,
-        licenseType: 'Commercial Royalty-Free',
-        price: '39.00',
-        syncStatus: 'synced',
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 10355224543530,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10355224543530',
-        handle: 'totoy-a-3d-chibi-character',
-        title: 'Totoy a 3D chibi character',
-        category: 'characters',
-        modelUrl: '/assets/pf-upload-1791716298416-totoy.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'GLB / FBX / OBJ / BLEND',
-        engineSupport: 'Unreal Engine 5 / Unity / Godot',
-        polycount: 2028,
-        lodCount: 3,
-        textureResolution: '4K PBR',
-        isRigged: true,
-        animationClips: 8,
-        licenseType: 'Commercial Royalty-Free',
-        price: '50.00',
-        syncStatus: 'synced',
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
+router.post('/sync-shopify', async (req: Request, res: Response) => {
+  const rawShop = (req.query.shop as string) || process.env.SHOPIFY_SHOP_DOMAIN || 'playforges-kkii5nq8.myshopify.com';
+  const cleanShop = sanitizeShopDomain(rawShop);
+  const adminToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
 
-    for (const a of inMemoryAssets) {
-      if (a.modelUrl && a.handle) {
-        registerAssetInTheme({
-          handle: a.handle,
-          title: a.title,
-          category: a.category.charAt(0).toUpperCase() + a.category.slice(1),
-          modelFilename: a.modelUrl,
-          polycount: a.polycount,
-          lodCount: a.lodCount,
-          engineSupport: a.engineSupport,
-          assetFormat: a.assetFormat,
-          textureResolution: a.textureResolution,
-          isRigged: a.isRigged,
-          animationClips: a.animationClips,
-          licenseType: a.licenseType
-        });
-      }
-    }
-
-    res.json({ success: true, count: inMemoryAssets.length });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  const result = await syncCatalogFromShopify(cleanShop, adminToken);
+  if (!result.success && result.count === 0) {
+    return res.status(500).json({ error: result.error || 'Failed to sync with Shopify Admin' });
   }
+
+  await logActivity({
+    shopId: 1,
+    action: 'updated',
+    summary: `Synchronized ${result.count} live products directly from Shopify Admin`,
+    details: `Updated catalog to match live Shopify store: ${result.assets.map(a => a.title).join(', ')}.`
+  });
+
+  res.json(result);
+});
+
+// Backward-compatible alias that safely syncs directly with live Shopify Admin
+router.post('/reseed', async (req: Request, res: Response) => {
+  const rawShop = (req.query.shop as string) || process.env.SHOPIFY_SHOP_DOMAIN || 'playforges-kkii5nq8.myshopify.com';
+  const cleanShop = sanitizeShopDomain(rawShop);
+  const adminToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+  const result = await syncCatalogFromShopify(cleanShop, adminToken);
+  res.json(result);
 });
 
 /**
@@ -1183,225 +1009,6 @@ router.post('/:id/sync', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/assets/reseed
- * Reseeds the entire asset catalog and theme registry with the curated 5 game-ready 3D assets,
- * cleaning out duplicate test items and restoring full evaluation metrics.
- */
-router.post('/reseed', async (req: Request, res: Response) => {
-  try {
-    const baselineAssets = [
-      {
-        id: 1,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346890035498',
-        handle: 'the-complete-snowboard',
-        title: 'Mgabata — 3D Chibi Hero Character',
-        category: 'characters' as const,
-        modelUrl: '/assets/pf-upload-1791716298416-totoy.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'GLB / FBX / OBJ / BLEND',
-        engineSupport: 'Unreal Engine 5 / Unity / Godot',
-        polycount: 18400,
-        lodCount: 3,
-        textureResolution: '4K PBR',
-        isRigged: true,
-        animationClips: 6,
-        licenseType: 'Commercial Royalty-Free',
-        price: '29.00',
-        syncStatus: 'synced' as const,
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346890363178',
-        handle: 'the-collection-snowboard-liquid',
-        title: 'Autonomous Recon Drone — Unit 04',
-        category: 'vehicles' as const,
-        modelUrl: '/assets/pf-model-drone.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'GLB / FBX / OBJ / BLEND',
-        engineSupport: 'Unreal Engine 5 / Unity / Godot',
-        polycount: 14400,
-        lodCount: 4,
-        textureResolution: '4K PBR',
-        isRigged: true,
-        animationClips: 8,
-        licenseType: 'Commercial Royalty-Free',
-        price: '35.00',
-        syncStatus: 'synced' as const,
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 3,
-        shopId: 1,
-        presetId: 1,
-        shopifyProductId: 'gid://shopify/Product/10346889904426',
-        handle: 'the-collection-snowboard-hydrogen',
-        title: 'Titan Heavy Combat Operative',
-        category: 'characters' as const,
-        modelUrl: '/assets/pf-model-astronaut.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'FBX / GLB / BLEND',
-        engineSupport: 'Unreal Engine 5 / Unity',
-        polycount: 42800,
-        lodCount: 3,
-        textureResolution: '4K PBR',
-        isRigged: true,
-        animationClips: 14,
-        licenseType: 'Commercial Royalty-Free',
-        price: '48.00',
-        syncStatus: 'synced' as const,
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 4,
-        shopId: 1,
-        presetId: 2,
-        shopifyProductId: 'gid://shopify/Product/10346890264874',
-        handle: 'the-collection-snowboard-oxygen',
-        title: 'Aero Tactical Flight Helmet',
-        category: 'props' as const,
-        modelUrl: '/assets/pf-model-helmet.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'GLB / OBJ / FBX',
-        engineSupport: 'Unreal Engine 5 / Unity / Godot',
-        polycount: 9800,
-        lodCount: 3,
-        textureResolution: '2K PBR',
-        isRigged: false,
-        animationClips: 0,
-        licenseType: 'Commercial Royalty-Free',
-        price: '22.00',
-        syncStatus: 'synced' as const,
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 5,
-        shopId: 1,
-        presetId: 3,
-        shopifyProductId: 'gid://shopify/Product/10346890330410',
-        handle: 'the-3p-fulfilled-snowboard',
-        title: 'Cyberpunk Industrial Generator Module',
-        category: 'environment' as const,
-        modelUrl: '/assets/pf-live-drone-custom.glb',
-        posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
-        assetFormat: 'FBX / GLB',
-        engineSupport: 'Unreal Engine 5 / Unity',
-        polycount: 78000,
-        lodCount: 2,
-        textureResolution: '4K PBR',
-        isRigged: false,
-        animationClips: 0,
-        licenseType: 'Commercial Royalty-Free',
-        price: '39.00',
-        syncStatus: 'synced' as const,
-        lastSyncedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
 
-    // Reset in-memory array
-    inMemoryAssets = baselineAssets.map(a => ({ ...a }));
-    nextAssetId = 6;
-
-    // Reset MySQL database tables if connected
-    if (isDbConnected() && db) {
-      try {
-        await db.delete(schema.assetEvaluations);
-        await db.delete(schema.assetCatalog);
-
-        for (const asset of baselineAssets) {
-          await db.insert(schema.assetCatalog).values({
-            id: asset.id,
-            shopId: asset.shopId,
-            presetId: asset.presetId,
-            shopifyProductId: asset.shopifyProductId,
-            title: asset.title,
-            category: asset.category,
-            modelUrl: asset.modelUrl,
-            posterUrl: asset.posterUrl,
-            assetFormat: asset.assetFormat,
-            engineSupport: asset.engineSupport,
-            polycount: asset.polycount,
-            lodCount: asset.lodCount,
-            textureResolution: asset.textureResolution,
-            isRigged: asset.isRigged,
-            animationClips: asset.animationClips,
-            licenseType: asset.licenseType,
-            price: asset.price,
-            syncStatus: asset.syncStatus,
-            lastSyncedAt: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-
-          const evaluation = calculatePipelineScore(asset);
-          await db.insert(schema.assetEvaluations).values({
-            assetId: asset.id,
-            overallScore: evaluation.overallScore,
-            polycountScore: evaluation.polycountScore,
-            textureScore: evaluation.textureScore,
-            engineScore: evaluation.engineScore,
-            rigScore: evaluation.rigScore,
-            qualityTier: evaluation.qualityTier,
-            alertsJson: JSON.stringify(evaluation.alerts),
-            recommendationsJson: JSON.stringify(evaluation.recommendations),
-            evaluatedAt: new Date()
-          });
-        }
-      } catch (dbErr: any) {
-        console.warn('[Reseed] DB reset warning:', dbErr.message);
-      }
-    }
-
-    // Register each asset in theme registry snippet
-    for (const asset of baselineAssets) {
-      registerAssetInTheme({
-        handle: asset.handle,
-        title: asset.title,
-        category: asset.category.charAt(0).toUpperCase() + asset.category.slice(1),
-        modelFilename: asset.modelUrl,
-        polycount: asset.polycount,
-        lodCount: asset.lodCount,
-        engineSupport: asset.engineSupport,
-        assetFormat: asset.assetFormat,
-        textureResolution: asset.textureResolution,
-        isRigged: asset.isRigged,
-        animationClips: asset.animationClips,
-        licenseType: asset.licenseType
-      });
-    }
-
-    await logActivity({
-      shopId: 1,
-      action: 'created',
-      summary: 'Reseeded catalog with 5 curated game-ready 3D assets',
-      details: 'Cleaned duplicate test records and restored 3D assets: Mgabata, Drone, Titan Operative, Flight Helmet, Industrial Generator.',
-      performedBy: 'System Reseed Trigger'
-    });
-
-    res.json({
-      success: true,
-      message: 'Catalog successfully reseeded with 5 curated 3D assets.',
-      count: baselineAssets.length
-    });
-  } catch (err: any) {
-    console.error('[Reseed] Error reseeding catalog:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
 
 export default router;

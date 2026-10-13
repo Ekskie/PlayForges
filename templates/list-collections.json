@@ -2,32 +2,8 @@
   "sections": {
     "playforge_directory": {
       "type": "playforge-collections-directory",
-      "blocks": {
-        "col_hydrogen": {
-          "type": "collection_card",
-          "settings": {
-            "collection": "hydrogen",
-            "is_flagship": true,
-            "custom_kicker": "FLAGSHIP // 01",
-            "custom_desc": "High-performance precision sports equipment and hard-surface simulation models. Engineered with clean quad loops, calibrated PBR shaders, and full collision bounds.",
-            "engine_tags": "UE5 Nanite · Unity URP · 4K PBR · FBX"
-          }
-        },
-        "col_automated": {
-          "type": "collection_card",
-          "settings": {
-            "collection": "automated-collection",
-            "is_flagship": false,
-            "custom_kicker": "DISCIPLINE // 02",
-            "custom_desc": "Curated catalog of modular studio assets and props. Inspected topology with zero non-manifold edges, game-ready LOD hierarchies, and multi-format exports.",
-            "engine_tags": "UE5 · Unity · Clean Quads · GLTF"
-          }
-        }
-      },
-      "block_order": [
-        "col_hydrogen",
-        "col_automated"
-      ],
+      "blocks": {},
+      "block_order": [],
       "settings": {
         "kicker": "CATALOG INDEX // 3D PIPELINE",
         "title": "Asset Collections & Disciplines",

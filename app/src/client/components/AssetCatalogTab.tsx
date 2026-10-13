@@ -7,7 +7,7 @@ interface AssetCatalogTabProps {
   onEditAsset: (asset: any) => void;
   onPreviewAsset: (asset: any) => void;
   onNavigateToIngest: () => void;
-  onReseedCatalog?: () => void;
+  onSyncFromShopify?: () => void;
   isSyncingId: number | null;
 }
 
@@ -17,7 +17,7 @@ export const AssetCatalogTab: React.FC<AssetCatalogTabProps> = ({
   onEditAsset,
   onPreviewAsset,
   onNavigateToIngest,
-  onReseedCatalog,
+  onSyncFromShopify,
   isSyncingId
 }) => {
   const [search, setSearch] = useState('');
@@ -54,15 +54,15 @@ export const AssetCatalogTab: React.FC<AssetCatalogTabProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          {onReseedCatalog && (
+          {onSyncFromShopify && (
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={onReseedCatalog}
-              title="Reseed demo catalog models"
+              onClick={onSyncFromShopify}
+              title="Sync directly with live Shopify Admin catalog"
             >
               <RefreshCw size={14} />
-              <span>Reseed Catalog</span>
+              <span>Sync with Shopify</span>
             </button>
           )}
           <button

@@ -33,12 +33,20 @@ export function ensureAbsoluteModelUrl(modelUrl?: string, domain = 'playforges-k
   return `https://${domain}${cleanPath}`;
 }
 
+export type SyncableAsset = AssetCatalog & {
+  description?: string;
+  vendor?: string;
+  status?: string;
+  compareAtPrice?: string | number;
+  handle?: string;
+};
+
 /**
  * Syncs verified 3D asset specifications to Shopify Product Metafields under the `custom` namespace.
  * This directly powers the PlayForge Liquid storefront theme (Part 1).
  */
 export async function syncAssetToShopify(
-  asset: AssetCatalog,
+  asset: SyncableAsset,
   shopDomain: string,
   accessToken?: string
 ): Promise<MetafieldSyncResult> {
@@ -108,7 +116,19 @@ export async function syncAssetToShopify(
         product {
           id
           title
-          metafields(first: 10) {
+          descriptionHtml
+          vendor
+          status
+          variants(first: 1) {
+            edges {
+              node {
+                id
+                price
+                compareAtPrice
+              }
+            }
+          }
+          metafields(first: 15) {
             edges {
               node {
                 namespace
@@ -128,6 +148,9 @@ export async function syncAssetToShopify(
       input: {
         id: shopifyId,
         title: asset.title,
+        ...(asset.description ? { descriptionHtml: asset.description } : {}),
+        ...(asset.vendor ? { vendor: asset.vendor } : {}),
+        ...(asset.status ? { status: asset.status === 'Draft' ? 'DRAFT' : 'ACTIVE' } : {}),
         metafields
       }
     }
@@ -151,7 +174,7 @@ export async function syncAssetToShopify(
     shopifyId = createResult.shopifyProductId!;
     asset.shopifyProductId = createResult.shopifyProductId!;
     if (createResult.handle) {
-      (asset as any).handle = createResult.handle;
+      asset.handle = createResult.handle;
     }
     return {
       success: true,
@@ -172,14 +195,20 @@ export async function syncAssetToShopify(
 
   if (isLiveAdminToken && liveToken) {
     try {
-      // Also ensure 3D model media is attached in Shopify Admin Product Media
+      // 1. Ensure 3D model media is attached in Shopify Admin Product Media without duplicate uploads
       if (asset.modelUrl && liveToken) {
-        upload3DModelToShopifyProductMedia(shopifyId, asset.modelUrl, liveToken, cleanDomain).catch(e => {
-          console.warn('[ShopifySync] Non-blocking media upload warning:', e.message);
-        });
+        try {
+          const mRes = await upload3DModelToShopifyProductMedia(shopifyId, asset.modelUrl, liveToken, cleanDomain);
+          if (mRes.cdnUrl) {
+            const m3dMeta = metafields.find(m => m.key === 'model_3d');
+            if (m3dMeta) m3dMeta.value = mRes.cdnUrl;
+          }
+        } catch (e: any) {
+          console.warn('[ShopifySync] 3D media sync warning:', e.message);
+        }
       }
 
-      // Also ensure cover thumbnail and gallery render photos are attached to Product Media
+      // 2. Also ensure cover thumbnail and gallery render photos are attached to Product Media
       if (liveToken) {
         const galleryList = Array.isArray((asset as any).galleryImages)
           ? (asset as any).galleryImages
@@ -187,11 +216,14 @@ export async function syncAssetToShopify(
           ? JSON.parse((asset as any).galleryImages || '[]')
           : [];
 
-        uploadAllProductImages(shopifyId, asset.posterUrl || undefined, galleryList, liveToken, cleanDomain).catch(e => {
+        try {
+          await uploadAllProductImages(shopifyId, asset.posterUrl || undefined, galleryList, liveToken, cleanDomain);
+        } catch (e: any) {
           console.warn('[ShopifySync] Non-blocking image upload warning:', e.message);
-        });
+        }
       }
 
+      // 3. Update product core properties and custom specifications metafields
       const response = await fetch(`https://${cleanDomain}/admin/api/2024-01/graphql.json`, {
         method: 'POST',
         headers: {
@@ -223,6 +255,45 @@ export async function syncAssetToShopify(
           error: data.data.productUpdate.userErrors.map((e: any) => e.message).join(', ')
         };
       }
+
+      // 4. Update variant price if asset.price is provided
+      if (asset.price) {
+        const firstVariant = data.data?.productUpdate?.product?.variants?.edges?.[0]?.node;
+        if (firstVariant && firstVariant.id) {
+          const formattedPrice = String(asset.price).replace(/[^0-9.]/g, '');
+          if (formattedPrice && firstVariant.price !== formattedPrice) {
+            try {
+              await fetch(`https://${cleanDomain}/admin/api/2024-01/graphql.json`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Shopify-Access-Token': liveToken
+                },
+                body: JSON.stringify({
+                  query: `mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+                    productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                      productVariants { id price }
+                      userErrors { field message }
+                    }
+                  }`,
+                  variables: {
+                    productId: shopifyId,
+                    variants: [{
+                      id: firstVariant.id,
+                      price: formattedPrice,
+                      ...(asset.compareAtPrice ? { compareAtPrice: String(asset.compareAtPrice).replace(/[^0-9.]/g, '') } : {})
+                    }]
+                  }
+                })
+              });
+              console.log(`[ShopifySync] ✓ Updated variant price to ₱${formattedPrice} for ${asset.title}`);
+            } catch (e: any) {
+              console.warn('[ShopifySync] Variant price update warning:', e.message);
+            }
+          }
+        }
+      }
+
       console.log(`[ShopifySync] Live GraphQL productUpdate successful for ${asset.title} on ${cleanDomain}`);
     } catch (err: any) {
       console.warn(`[ShopifySync] Network call to Shopify Admin API on ${cleanDomain} failed: ${err.message}.`);
@@ -648,6 +719,105 @@ export async function upload3DModelToShopifyProductMedia(
       return { success: false, error: `File not found: ${filename}` };
     }
 
+    // STEP 0: Check existing media on Shopify product to prevent duplicate / double uploads
+    const checkMediaQuery = `query getProductMedia($productId: ID!) {
+      product(id: $productId) {
+        media(first: 25) {
+          edges {
+            node {
+              id
+              mediaContentType
+              status
+              ... on Model3d {
+                filename
+                alt
+                sources {
+                  url
+                  format
+                }
+              }
+            }
+          }
+        }
+      }
+    }`;
+
+    const checkRes = await fetch(`https://${cleanDomain}/admin/api/2024-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': token
+      },
+      body: JSON.stringify({
+        query: checkMediaQuery,
+        variables: { productId: shopifyProductId }
+      })
+    });
+
+    const checkData = await checkRes.json();
+    const mediaNodes = (checkData.data?.product?.media?.edges || []).map((e: any) => e.node);
+    const existing3dModels = mediaNodes.filter((m: any) => m.mediaContentType === 'MODEL_3D');
+
+    const cleanTargetName = filename.toLowerCase().replace(/^pf-upload-\d+-/i, '').replace(/[-_]/g, '').replace(/\.glb$/i, '');
+
+    const matchingModel = existing3dModels.find((m: any) => {
+      const existingFilename = (m.filename || '').toLowerCase().replace(/^pf-upload-\d+-/i, '').replace(/[-_]/g, '').replace(/\.glb$/i, '');
+      return existingFilename.includes(cleanTargetName) || cleanTargetName.includes(existingFilename);
+    });
+
+    if (matchingModel) {
+      console.log(`[ShopifySync] ✓ 3D Model '${filename}' is already attached to ${shopifyProductId} (Media ID: ${matchingModel.id}). Skipping re-upload to avoid duplicate files.`);
+
+      // Clean up any extra duplicate 3D models created earlier
+      const redundantModels = existing3dModels.filter((m: any) => m.id !== matchingModel.id);
+      if (redundantModels.length > 0) {
+        const redundantIds = redundantModels.map((m: any) => m.id);
+        console.log(`[ShopifySync] Cleaning up ${redundantIds.length} duplicate 3D models on Shopify:`, redundantIds);
+        await fetch(`https://${cleanDomain}/admin/api/2024-01/graphql.json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Access-Token': token
+          },
+          body: JSON.stringify({
+            query: `mutation productDeleteMedia($productId: ID!, $mediaIds: [ID!]!) {
+              productDeleteMedia(productId: $productId, mediaIds: $mediaIds) {
+                deletedMediaIds
+              }
+            }`,
+            variables: { productId: shopifyProductId, mediaIds: redundantIds }
+          })
+        }).catch(() => {});
+      }
+
+      return {
+        success: true,
+        mediaId: matchingModel.id,
+        cdnUrl: matchingModel.sources?.[0]?.url
+      };
+    }
+
+    // If an existing 3D model exists but it's a different model file, delete the old one
+    if (existing3dModels.length > 0) {
+      const oldIds = existing3dModels.map((m: any) => m.id);
+      console.log(`[ShopifySync] Replacing old 3D model on ${shopifyProductId} with new file '${filename}'. Deleting old media:`, oldIds);
+      await fetch(`https://${cleanDomain}/admin/api/2024-01/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': token
+        },
+        body: JSON.stringify({
+          query: `mutation productDeleteMedia($productId: ID!, $mediaIds: [ID!]!) {
+            productDeleteMedia(productId: $productId, mediaIds: $mediaIds) {
+              deletedMediaIds
+            }
+          }`,
+          variables: { productId: shopifyProductId, mediaIds: oldIds }
+        })
+      }).catch(() => {});
+    }
+
     const fileBuffer = fs.readFileSync(localFilePath);
     const fileSize = fileBuffer.length;
 
@@ -770,4 +940,231 @@ export async function upload3DModelToShopifyProductMedia(
     return { success: false, error: err.message };
   }
 }
+
+export interface LiveShopifyProduct {
+  id: number;
+  shopifyProductId: string;
+  handle: string;
+  title: string;
+  description: string;
+  vendor: string;
+  status: string;
+  price: string;
+  compareAtPrice: string;
+  inventoryQuantity: number;
+  posterUrl: string;
+  galleryImages: Array<{ url: string; label: string; filename?: string }>;
+  modelUrl?: string;
+  polycount?: number;
+  lodCount?: number;
+  engineSupport?: string;
+  assetFormat?: string;
+  textureResolution?: string;
+  isRigged?: boolean;
+  animationClips?: number;
+  licenseType?: string;
+  category?: string;
+}
+
+/**
+ * Fetches all live products directly from Shopify Admin GraphQL API including real images, 3D media, and metafields.
+ */
+export async function fetchLiveShopifyProducts(
+  cleanDomain: string,
+  token: string
+): Promise<LiveShopifyProduct[]> {
+  try {
+    const query = `query getLiveProducts {
+      products(first: 50) {
+        edges {
+          node {
+            id
+            title
+            handle
+            description
+            descriptionHtml
+            status
+            vendor
+            featuredImage { url }
+            images(first: 20) {
+              edges {
+                node {
+                  id
+                  url
+                  altText
+                }
+              }
+            }
+            media(first: 15) {
+              edges {
+                node {
+                  id
+                  mediaContentType
+                  status
+                  ... on Model3d {
+                    filename
+                    alt
+                    sources {
+                      url
+                      format
+                    }
+                  }
+                }
+              }
+            }
+            variants(first: 5) {
+              edges {
+                node {
+                  id
+                  price
+                  compareAtPrice
+                  inventoryQuantity
+                }
+              }
+            }
+            metafields(first: 30) {
+              edges {
+                node {
+                  namespace
+                  key
+                  value
+                }
+              }
+            }
+          }
+        }
+      }
+    }`;
+
+    const res = await fetch(`https://${cleanDomain}/admin/api/2024-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': token
+      },
+      body: JSON.stringify({ query })
+    });
+
+    if (!res.ok) {
+      console.warn(`[ShopifySync] fetchLiveShopifyProducts HTTP error: ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+    const edges = data.data?.products?.edges || [];
+
+    // Read available local theme glb files to match with Shopify models
+    const localGlbFiles: string[] = [];
+    try {
+      if (fs.existsSync(themeAssetsDir)) {
+        localGlbFiles.push(...fs.readdirSync(themeAssetsDir).filter(f => f.toLowerCase().endsWith('.glb')));
+      }
+    } catch {}
+
+    const results: LiveShopifyProduct[] = [];
+
+    for (const edge of edges) {
+      const p = edge.node;
+      const numId = Number(p.id.replace('gid://shopify/Product/', ''));
+      const firstVariant = p.variants?.edges?.[0]?.node;
+
+      // Extract real product images from Shopify
+      const realImages = (p.images?.edges || []).map((ie: any, idx: number) => ({
+        url: ie.node.url,
+        label: ie.node.altText || (idx === 0 ? 'Primary Cover' : `Gallery Render #${idx + 1}`),
+        filename: ie.node.url ? ie.node.url.split('/').pop()?.split('?')[0] : `image-${idx + 1}.png`
+      }));
+
+      const primaryCover = p.featuredImage?.url || realImages[0]?.url || '';
+
+      // Extract Metafields Map
+      const metaMap = new Map<string, string>();
+      for (const me of p.metafields?.edges || []) {
+        if (me.node && me.node.key) {
+          metaMap.set(`${me.node.namespace}.${me.node.key}`, me.node.value);
+        }
+      }
+
+      // Extract 3D Model
+      let matchedModelUrl = metaMap.get('custom.model_3d') || '';
+      const model3dNode = (p.media?.edges || [])
+        .map((me: any) => me.node)
+        .find((m: any) => m.mediaContentType === 'MODEL_3D');
+
+      if (model3dNode) {
+        const rawFilename = model3dNode.filename || '';
+        const cleanName = rawFilename.toLowerCase().replace(/[-_]/g, '').replace(/\.glb$/i, '');
+        const localMatch = localGlbFiles.find(f => {
+          const cleanLocal = f.toLowerCase().replace(/^pf-upload-\d+-/i, '').replace(/[-_]/g, '').replace(/\.glb$/i, '');
+          return cleanLocal === cleanName || f.toLowerCase() === rawFilename.toLowerCase();
+        });
+
+        if (localMatch) {
+          matchedModelUrl = `/assets/${localMatch}`;
+        } else if (model3dNode.sources?.[0]?.url) {
+          matchedModelUrl = matchedModelUrl || model3dNode.sources[0].url;
+        }
+      }
+
+      // Parse numeric polycount if present
+      const rawPoly = metaMap.get('custom.polycount');
+      let polycount = 0;
+      if (rawPoly) {
+        const match = rawPoly.match(/([0-9,]+)/);
+        if (match) polycount = parseInt(match[1].replace(/,/g, ''), 10);
+      }
+
+      // Parse lodCount
+      let lodCount = 3;
+      if (rawPoly && rawPoly.includes('LOD')) {
+        const lodMatch = rawPoly.match(/(\d+)\s*LOD/i);
+        if (lodMatch) lodCount = parseInt(lodMatch[1], 10);
+      }
+
+      // Parse rigged
+      const rawRigged = metaMap.get('custom.rigged') || '';
+      const isRigged = rawRigged.toLowerCase().includes('yes') || rawRigged.toLowerCase().includes('true');
+
+      // Parse animated
+      const rawAnim = metaMap.get('custom.animated') || '';
+      let animationClips = 0;
+      if (rawAnim) {
+        const animMatch = rawAnim.match(/(\d+)/);
+        if (animMatch) animationClips = parseInt(animMatch[1], 10);
+      }
+
+      results.push({
+        id: numId,
+        shopifyProductId: p.id,
+        handle: p.handle,
+        title: p.title,
+        description: p.description || '',
+        vendor: p.vendor || 'PlayForges',
+        status: p.status === 'DRAFT' ? 'Draft' : 'Active',
+        price: firstVariant?.price || '39.00',
+        compareAtPrice: firstVariant?.compareAtPrice || '',
+        inventoryQuantity: firstVariant?.inventoryQuantity || 50,
+        posterUrl: primaryCover,
+        galleryImages: realImages,
+        modelUrl: matchedModelUrl,
+        polycount: polycount || undefined,
+        lodCount,
+        engineSupport: metaMap.get('custom.engine_support'),
+        assetFormat: metaMap.get('custom.asset_format'),
+        textureResolution: metaMap.get('custom.texture_resolution'),
+        isRigged,
+        animationClips,
+        licenseType: metaMap.get('custom.license_type'),
+        category: metaMap.get('custom.asset_category')?.toLowerCase() || 'characters'
+      });
+    }
+
+    console.log(`[ShopifySync] ✓ Successfully pulled ${results.length} live products directly from Shopify Admin GraphQL API`);
+    return results;
+  } catch (err: any) {
+    console.warn(`[ShopifySync] Error fetching live Shopify products:`, err.message);
+    return [];
+  }
+}
+
 
